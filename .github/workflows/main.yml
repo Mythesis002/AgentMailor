@@ -1,0 +1,37 @@
+name: Himalaya IT Outreach Engine
+
+on:
+  schedule:
+    - cron: "0 9 * * 1-5"   # Runs every weekday at 9:00 AM UTC (2:30 PM IST)
+  workflow_dispatch:          # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  send-outreach:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Run Outreach Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        run: python mailor.py
+
+      - name: 📄 Upload Log as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outreach-log
+          path: himalaya_outreach.log
+          retention-days: 7
