@@ -18,7 +18,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # 2. CONFIGURATION
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDL6mu7ePmgpPgz-Lgp-uS9VMj4eitHbM4")
+GEMINI_API_KEY = "AIzaSyDL6mu7ePmgpPgz-Lgp-uS9VMj4eitHbM4"
 EMAIL_USER     = "adarshsinghgonti02@gmail.com"
 EMAIL_PASS     = "mamppvuvxekabqkx"  # ✅ FIXED: removed spaces from App Password
 
