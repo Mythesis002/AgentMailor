@@ -1,1 +1,2 @@
 google-genai>=1.0.0
+dnspython>=2.6.0
