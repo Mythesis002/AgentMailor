@@ -2,7 +2,7 @@ name: Himalaya IT Outreach Engine
 
 on:
   schedule:
-    - cron: "0 9 * * 1-5"   # Every weekday 9:00 AM UTC (2:30 PM IST)
+    - cron: "30 3 * * 1-5"   # Every weekday 9:00 AM UTC (2:30 PM IST)
   workflow_dispatch:          # Manual trigger from the Actions tab
     inputs:
       dry_run:
