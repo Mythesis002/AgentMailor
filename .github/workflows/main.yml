@@ -2,12 +2,27 @@ name: Himalaya IT Outreach Engine
 
 on:
   schedule:
-    - cron: "0 9 * * 1-5"   # Runs every weekday at 9:00 AM UTC (2:30 PM IST)
-  workflow_dispatch:          # Allows manual trigger from GitHub Actions UI
+    - cron: "0 9 * * 1-5"   # Every weekday 9:00 AM UTC (2:30 PM IST)
+  workflow_dispatch:          # Manual trigger from the Actions tab
+    inputs:
+      dry_run:
+        description: "Dry run (write emails but do NOT send)"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+permissions:
+  contents: write             # needed to commit sent_log.csv back to the repo
+
+concurrency:
+  group: outreach
+  cancel-in-progress: false
 
 jobs:
   send-outreach:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: 📥 Checkout Repository
@@ -17,6 +32,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: 📦 Install Dependencies
         run: pip install -r requirements.txt
@@ -26,7 +42,20 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          # Scheduled runs send for real; manual runs default to dry run
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+          DAILY_LIMIT: "10"
+          # Name, phone, website and company defaults live in mailor.py
+          DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
+
+      - name: 💾 Save Sent Log (prevents emailing anyone twice)
+        if: always()
+        run: |
+          git config user.name "himalaya-bot"
+          git config user.email "himalaya-bot@users.noreply.github.com"
+          git add sent_log.csv
+          git diff --staged --quiet || (git commit -m "chore: update sent log" && git push)
 
       - name: 📄 Upload Log as Artifact
         if: always()
