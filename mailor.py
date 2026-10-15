@@ -1,5 +1,5 @@
 """
-Himalaya IT Outreach Engine v2  (local businesses across India)
+Himalaya IT Outreach Engine v2  (small businesses worldwide)
 
 Pipeline per run:
   1. OpenStreetMap (free Overpass API, no key) finds real local businesses that list a website
@@ -70,13 +70,12 @@ SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Himalaya IT")
 COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # postal address; REQUIRED for US recipients (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 
 COMPANY_PITCH = (
-    "Himalaya IT is a professional web and software development service based in Greater Noida. "
-    "We build modern websites, web applications, mobile apps, and custom business solutions. "
-    "Our services include UI/UX design, SEO, performance optimization, and business automation. "
-    "Get a website FREE with eligible app development projects."
+    "Himalaya IT is a 25-member team based in Greater Noida. We fix and rebuild business "
+    "websites: speed, mobile layout, SEO basics, and lead capture (WhatsApp, call and enquiry buttons)."
 )
 
 MODEL = "gemini-2.5-flash"
@@ -87,16 +86,62 @@ BLOCKING_STATUSES = {"sent", "no_email", "no_issue", "unreachable", "bad_email"}
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; HimalayaITAudit/2.0)",
-    "Accept-Language": "en-IN,en;q=0.9",
+    "Accept-Language": "en;q=0.9,*;q=0.5",
 }
 
+# (city, country, latitude, longitude). English-friendly business markets worldwide.
 CITIES = [
-    "Lucknow", "Kanpur", "Prayagraj", "Varanasi", "Agra", "Meerut", "Ghaziabad", "Noida",
-    "Jaipur", "Indore", "Bhopal", "Nagpur", "Surat", "Vadodara", "Rajkot", "Ahmedabad",
-    "Coimbatore", "Kochi", "Visakhapatnam", "Hyderabad", "Pune", "Chandigarh", "Ludhiana",
-    "Dehradun", "Patna", "Ranchi", "Bhubaneswar", "Guwahati", "Nashik", "Delhi", "Mumbai",
-    "Bengaluru", "Chennai", "Kolkata",
+    # India
+    ("Lucknow", "India", 26.85, 80.95), ("Kanpur", "India", 26.45, 80.35), ("Prayagraj", "India", 25.43, 81.85),
+    ("Varanasi", "India", 25.32, 82.97), ("Agra", "India", 27.18, 78.01), ("Meerut", "India", 28.98, 77.71),
+    ("Ghaziabad", "India", 28.67, 77.45), ("Noida", "India", 28.57, 77.32), ("Jaipur", "India", 26.91, 75.79),
+    ("Indore", "India", 22.72, 75.86), ("Bhopal", "India", 23.26, 77.41), ("Nagpur", "India", 21.15, 79.09),
+    ("Surat", "India", 21.17, 72.83), ("Vadodara", "India", 22.31, 73.18), ("Rajkot", "India", 22.30, 70.80),
+    ("Ahmedabad", "India", 23.02, 72.57), ("Coimbatore", "India", 11.02, 76.96), ("Kochi", "India", 9.93, 76.27),
+    ("Visakhapatnam", "India", 17.69, 83.22), ("Hyderabad", "India", 17.39, 78.49), ("Pune", "India", 18.52, 73.86),
+    ("Chandigarh", "India", 30.73, 76.78), ("Ludhiana", "India", 30.90, 75.86), ("Dehradun", "India", 30.32, 78.03),
+    ("Patna", "India", 25.59, 85.14), ("Ranchi", "India", 23.34, 85.31), ("Bhubaneswar", "India", 20.30, 85.82),
+    ("Guwahati", "India", 26.14, 91.74), ("Nashik", "India", 20.00, 73.79), ("Delhi", "India", 28.61, 77.21),
+    ("Mumbai", "India", 19.08, 72.88), ("Bengaluru", "India", 12.97, 77.59), ("Chennai", "India", 13.08, 80.27),
+    ("Kolkata", "India", 22.57, 88.36),
+    # United States
+    ("New York", "United States", 40.71, -74.01), ("Los Angeles", "United States", 34.05, -118.24),
+    ("Chicago", "United States", 41.88, -87.63), ("Houston", "United States", 29.76, -95.37),
+    ("Phoenix", "United States", 33.45, -112.07), ("Dallas", "United States", 32.78, -96.80),
+    ("Austin", "United States", 30.27, -97.74), ("San Diego", "United States", 32.72, -117.16),
+    ("Miami", "United States", 25.76, -80.19), ("Atlanta", "United States", 33.75, -84.39),
+    ("Seattle", "United States", 47.61, -122.33), ("Denver", "United States", 39.74, -104.99),
+    ("Boston", "United States", 42.36, -71.06), ("Orlando", "United States", 28.54, -81.38),
+    ("Charlotte", "United States", 35.23, -80.84),
+    # Canada (blocked by default, see BLOCKED_COUNTRIES)
+    ("Toronto", "Canada", 43.65, -79.38), ("Vancouver", "Canada", 49.28, -123.12),
+    ("Calgary", "Canada", 51.05, -114.07), ("Montreal", "Canada", 45.50, -73.57),
+    # United Kingdom and Ireland
+    ("London", "United Kingdom", 51.51, -0.13), ("Manchester", "United Kingdom", 53.48, -2.24),
+    ("Birmingham", "United Kingdom", 52.49, -1.89), ("Leeds", "United Kingdom", 53.80, -1.55),
+    ("Glasgow", "United Kingdom", 55.86, -4.25), ("Bristol", "United Kingdom", 51.45, -2.59),
+    ("Dublin", "Ireland", 53.35, -6.26),
+    # Australia and New Zealand
+    ("Sydney", "Australia", -33.87, 151.21), ("Melbourne", "Australia", -37.81, 144.96),
+    ("Brisbane", "Australia", -27.47, 153.03), ("Perth", "Australia", -31.95, 115.86),
+    ("Adelaide", "Australia", -34.93, 138.60), ("Auckland", "New Zealand", -36.85, 174.76),
+    # Middle East, Asia
+    ("Dubai", "United Arab Emirates", 25.20, 55.27), ("Abu Dhabi", "United Arab Emirates", 24.45, 54.38),
+    ("Singapore", "Singapore", 1.35, 103.82), ("Kuala Lumpur", "Malaysia", 3.14, 101.69),
+    ("Manila", "Philippines", 14.60, 120.98), ("Hong Kong", "Hong Kong", 22.32, 114.17),
+    ("Karachi", "Pakistan", 24.86, 67.01), ("Lahore", "Pakistan", 31.55, 74.34),
+    ("Dhaka", "Bangladesh", 23.81, 90.41), ("Colombo", "Sri Lanka", 6.93, 79.86), ("Kathmandu", "Nepal", 27.72, 85.32),
+    # Africa
+    ("Lagos", "Nigeria", 6.52, 3.38), ("Accra", "Ghana", 5.60, -0.19), ("Nairobi", "Kenya", -1.29, 36.82),
+    ("Johannesburg", "South Africa", -26.20, 28.05), ("Cape Town", "South Africa", -33.92, 18.42),
+    # Europe (high English use)
+    ("Amsterdam", "Netherlands", 52.37, 4.90), ("Stockholm", "Sweden", 59.33, 18.07),
+    ("Copenhagen", "Denmark", 55.68, 12.57),
 ]
+BLOCKED_COUNTRIES = {c.strip().lower() for c in os.environ.get("BLOCKED_COUNTRIES", "Canada").split(",")
+                     if c.strip() and c.strip().lower() != "none"}
+SEARCH_RADIUS_M = int(_env("SEARCH_RADIUS_M", "12000"))
+INCLUDE_CHAINS = _env("INCLUDE_CHAINS", "false").lower() == "true"
 # category -> OpenStreetMap tags (key, value). Only places that list a website are returned.
 CATEGORIES = {
     "dental clinics": [("amenity", "dentist")],
@@ -220,6 +265,8 @@ DIRECTORY_DOMAINS = (
     "justdial", "indiamart", "sulekha", "tripadvisor", "zomato", "swiggy", "facebook", "instagram",
     "linkedin", "youtube", "wikipedia", "google.", "practo", "magicbricks", "99acres", "housing.com",
     "makemytrip", "booking.com", "lybrate", "urbanclap", "urbancompany", "clinicspots", "yelp",
+    "yellowpages", "trustpilot", "airbnb", "expedia", "opentable", "tiktok", "twitter.", "x.com",
+    "pinterest", "maps.", "goo.gl", "apple.com", "groupon", "healthgrades", "zocdoc", "doctolib", "treatwell",
 )
 
 
@@ -239,15 +286,18 @@ def clean_osm_email(raw: Optional[str]) -> Optional[str]:
     return None
 
 
-def overpass_query(city: str, tags: list) -> str:
-    parts = "".join(f'nwr["{k}"="{v}"][~"^(contact:)?website$"~"."](area.a);' for k, v in tags)
-    return f'[out:json][timeout:90];area["name"="{city}"]["boundary"="administrative"]->.a;({parts});out tags 150;'
+def overpass_query(lat: float, lon: float, tags: list) -> str:
+    parts = "".join(
+        f'nwr["{k}"="{v}"][~"^(contact:)?website$"~"."](around:{SEARCH_RADIUS_M},{lat},{lon});' for k, v in tags
+    )
+    return f"[out:json][timeout:90];({parts});out tags 200;"
 
 
-def discover(city: str, category: str) -> list:
-    """Free lead source: OpenStreetMap businesses in `city` that list their own website."""
-    log.info(f"🔎 Discovering (OpenStreetMap): {category} in {city}")
-    query, data = overpass_query(city, CATEGORIES[category]), None
+def discover(city: tuple, category: str) -> list:
+    """Free lead source: OpenStreetMap businesses near `city` that list their own website."""
+    name_, country, lat, lon = city
+    log.info(f"🔎 Discovering (OpenStreetMap): {category} in {name_}, {country}")
+    query, data = overpass_query(lat, lon, CATEGORIES[category]), None
     for attempt in range(3):
         for url in OVERPASS_URLS:
             try:
@@ -263,20 +313,22 @@ def discover(city: str, category: str) -> list:
         time.sleep(15 * (attempt + 1))
 
     elements = (data or {}).get("elements", [])
-    random.Random(f"{date.today()}-{city}-{category}").shuffle(elements)   # vary leads day to day
+    random.Random(f"{date.today()}-{name_}-{category}").shuffle(elements)   # vary leads day to day
     out, seen_hosts = [], set()
     for el in elements:
         tags = el.get("tags") or {}
         site = tags.get("website") or tags.get("contact:website")
-        name = (tags.get("name") or "").strip()
-        if not site or not name:
+        biz_name = (tags.get("name") or "").strip()
+        if not site or not biz_name:
             continue
+        if not INCLUDE_CHAINS and (tags.get("brand") or tags.get("brand:wikidata") or tags.get("operator:wikidata")):
+            continue                      # focus on small independent businesses
         h = host_of(str(site))
         if not h or "." not in h or h in seen_hosts or any(d in h for d in DIRECTORY_DOMAINS):
             continue
         seen_hosts.add(h)
         out.append({
-            "name": name, "host": h, "city": city, "category": category,
+            "name": biz_name, "host": h, "city": name_, "country": country, "category": category,
             "osm_email": tags.get("email") or tags.get("contact:email"),
         })
         if len(out) >= LEADS_PER_SEARCH:
@@ -355,7 +407,7 @@ def audit_site(r: requests.Response, elapsed: float, notes: dict) -> list:
     if not (has_tel or has_wa or has_form):
         add(3, "no_lead_capture", "The homepage has no click-to-call, WhatsApp button or enquiry form, so interested visitors have no easy way to reach out")
     elif not (has_tel or has_wa):
-        add(2, "no_quick_contact", "No click-to-call or WhatsApp button, which most Indian mobile visitors expect")
+        add(2, "no_quick_contact", "No click-to-call or WhatsApp button, which most mobile visitors expect")
 
     # SEO basics
     title = (soup.title.string or "").strip() if soup.title and soup.title.string else ""
@@ -381,7 +433,9 @@ def audit_site(r: requests.Response, elapsed: float, notes: dict) -> list:
 # 7. EMAIL DISCOVERY (publicly listed only) + VERIFICATION
 # ─────────────────────────────────────────────
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
-FREE_MAIL = {"gmail.com", "yahoo.com", "yahoo.in", "outlook.com", "hotmail.com", "rediffmail.com", "zoho.com"}
+FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.in", "yahoo.co.uk", "yahoo.com.au", "outlook.com",
+             "hotmail.com", "hotmail.co.uk", "live.com", "msn.com", "icloud.com", "me.com", "aol.com",
+             "proton.me", "protonmail.com", "rediffmail.com", "zoho.com", "mail.com"}
 JUNK_SUBSTR = ("sentry", "wixpress", "example", "yourdomain", "domain.com", "email.com", "noreply",
                "no-reply", "donotreply", "u003e", "@2x", "godaddy", "privacy@", "abuse@")
 JUNK_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff")
@@ -476,7 +530,7 @@ def write_email(biz: dict, issues: list, website: str) -> Optional[dict]:
     findings = "\n".join(f"{i+1}. {x['detail']}" for i, x in enumerate(top))
     prompt = f"""
 Write a short cold email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
-({biz['category']}, {biz['city']}, website: {website}).
+({biz['category']}, {biz['city']}, {biz.get('country', '')}, website: {website}).
 
 ABOUT US: {COMPANY_PITCH}
 DELIVERY TIME TO FIX: {DELIVERY_DAYS}
@@ -518,8 +572,8 @@ def fallback_email(biz: dict, issues: list, website: str) -> dict:
         "Hi,\n\n"
         f"I took a look at {website} and noticed that {main}.{extra} "
         "Issues like this can mean lost enquiries and a lower Google ranking.\n\n"
-        f"I'm with {COMPANY_NAME}, a 25-member team that fixes and rebuilds business websites: speed, "
-        f"mobile layout, SEO basics and WhatsApp/call buttons. We can fix this in {DELIVERY_DAYS}.\n\n"
+        f"I'm with {COMPANY_NAME}, a web and software development team. We build modern websites and apps and fix "
+        f"existing ones: speed, mobile layout, SEO and lead capture. We can fix this in {DELIVERY_DAYS}.\n\n"
         "If you'd like, reply \"yes\" and we'll send a free one-page report of the fixes."
     )
     return {"subject": f"Quick note about {biz['name']}'s website"[:90], "body": body}
@@ -531,6 +585,8 @@ def signature() -> str:
         lines.append(COMPANY_PHONE)
     if COMPANY_SITE:
         lines.append(COMPANY_SITE)
+    if COMPANY_ADDRESS:
+        lines.append(COMPANY_ADDRESS)
     lines += ["", "P.S. If this isn't relevant, just reply \"no\" and I won't email you again."]
     return "\n".join(lines)
 
@@ -689,7 +745,10 @@ def run_followups(suppressed: set) -> int:
 
 def pick_combos(n: int) -> list:
     rng = random.Random(date.today().toordinal())     # different mix every day, reproducible per day
-    combos = [(c, k) for c in CITIES for k in CATEGORIES]
+    cities = [c for c in CITIES
+              if c[1].lower() not in BLOCKED_COUNTRIES
+              and not (c[1] == "United States" and not COMPANY_ADDRESS)]
+    combos = [(c, k) for c in cities for k in CATEGORIES]
     rng.shuffle(combos)
     return combos[:n]
 
@@ -763,6 +822,10 @@ def main() -> None:
         raise SystemExit(f"Missing environment variables: {', '.join(missing)}")
 
     log.info(f"🚀 Himalaya IT Outreach Engine v2 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT}")
+    if not COMPANY_ADDRESS:
+        log.warning("COMPANY_ADDRESS not set: United States leads are skipped (US law requires a postal address)")
+    if BLOCKED_COUNTRIES:
+        log.info(f"Blocked countries: {sorted(BLOCKED_COUNTRIES)}")
     ensure_log()
     seen, suppressed = load_seen(), load_suppressed()
     done = 0
