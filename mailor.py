@@ -73,8 +73,10 @@ COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 
 COMPANY_PITCH = (
-    "Himalaya IT is a 25-member team based in Greater Noida. We fix and rebuild business "
-    "websites: speed, mobile layout, SEO basics, and lead capture (WhatsApp, call and enquiry buttons)."
+    "Himalaya IT is a professional web and software development service based in Greater Noida. "
+    "We build modern websites, web applications, mobile apps, and custom business solutions. "
+    "Our services include UI/UX design, SEO, performance optimization, and business automation. "
+    "Get a website FREE with eligible app development projects."
 )
 
 MODEL = "gemini-2.5-flash"
