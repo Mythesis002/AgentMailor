@@ -45,6 +45,7 @@ jobs:
           # Scheduled runs send for real; manual runs default to dry run
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
           DAILY_LIMIT: "10"
+          COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}   # optional repo Variable; needed to email US businesses
           # Name, phone, website and company defaults live in mailor.py
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
