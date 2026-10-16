@@ -2,8 +2,11 @@ name: Himalaya IT Outreach Engine
 
 on:
   schedule:
-    - cron: "30 3 * * 1-5"   # Every weekday 9:00 AM UTC (2:30 PM IST)
-  workflow_dispatch:          # Manual trigger from the Actions tab
+    # Three runs per weekday so each region is emailed during ITS business hours (times in UTC)
+    - cron: "30 4 * * 1-5"    # India / Asia-Pacific morning
+    - cron: "0 9 * * 1-5"     # Europe / Middle East / Africa / India afternoon
+    - cron: "30 16 * * 1-5"   # Americas morning
+  workflow_dispatch:
     inputs:
       dry_run:
         description: "Dry run (write emails but do NOT send)"
@@ -13,7 +16,7 @@ on:
         options: ["true", "false"]
 
 permissions:
-  contents: write             # needed to commit sent_log.csv back to the repo
+  contents: write             # needed to commit the logs back to the repo
 
 concurrency:
   group: outreach
@@ -25,43 +28,51 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Set Up Python
+      - name: Set Up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      - name: 🚀 Run Outreach Script
+      - name: Run Outreach Script
         env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          # Scheduled runs send for real; manual runs default to dry run
+          # Optional: a proper sending service instead of Gmail (leave unset to use Gmail)
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          # Scheduled runs send for real; manual runs default to a dry run that ignores local business hours
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+          BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
           DAILY_LIMIT: "10"
           COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}   # optional repo Variable; needed to email US businesses
-          # Name, phone, website and company defaults live in mailor.py
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
 
-      - name: 💾 Save Sent Log (prevents emailing anyone twice)
+      - name: Save Logs (prevents emailing anyone twice)
         if: always()
         run: |
           git config user.name "himalaya-bot"
           git config user.email "himalaya-bot@users.noreply.github.com"
-          git add sent_log.csv
-          git diff --staged --quiet || (git commit -m "chore: update sent log" && git push)
+          for f in sent_log.csv call_list.csv api_usage.json; do [ -f "$f" ] && git add "$f"; done || true
+          git diff --staged --quiet || (git commit -m "chore: update logs" && git pull --rebase --autostash && git push)
 
-      - name: 📄 Upload Log as Artifact
+      - name: Upload Log as Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: outreach-log
-          path: himalaya_outreach.log
+          path: |
+            himalaya_outreach.log
+            call_list.csv
           retention-days: 7
