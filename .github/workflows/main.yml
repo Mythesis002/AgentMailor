@@ -3,7 +3,7 @@ name: Himalaya IT Outreach Engine
 on:
   schedule:
     # Three runs per weekday so each region is emailed during ITS business hours (times in UTC)
-    - cron: "30 4 * * 1-5"    # India / Asia-Pacific morning
+    - cron: "30 9 * * 1-5"    # India / Asia-Pacific morning
     - cron: "0 9 * * 1-5"     # Europe / Middle East / Africa / India afternoon
     - cron: "30 16 * * 1-5"   # Americas morning
   workflow_dispatch:
