@@ -1,5 +1,5 @@
 """
-Himalaya IT Outreach Engine v4  (businesses worldwide, Google Maps data via RapidAPI)
+Himalaya IT Outreach Engine v5  (businesses worldwide, Google Maps data via RapidAPI)
 
 Per run:
   0. Sync inbox: mark replies / bounces, pause sending if the bounce rate is too high
@@ -13,7 +13,8 @@ Per run:
   7. Send, log to sent_log.csv; every serious lead with a phone number goes to call_list.csv
 
 Secrets come ONLY from environment variables (GitHub Actions secrets).
-Free report for a lead who replies "yes":   python mailor.py --report their-domain.com
+WhatsApp version (phone numbers, human taps send): see wa_assist.py
+Report for a lead who replies "yes":   python mailor.py --report their-domain.com
 """
 
 import csv
@@ -92,13 +93,14 @@ FOLLOWUP_AFTER_DAYS = int(_env("FOLLOWUP_AFTER_DAYS", "3"))
 FOLLOWUP_MAX_AGE_DAYS = int(_env("FOLLOWUP_MAX_AGE_DAYS", "14"))
 BOUNCE_PAUSE_RATE = float(_env("BOUNCE_PAUSE_RATE", "0.10"))
 MAX_RUNTIME_S = int(_env("MAX_RUNTIME_MIN", "40")) * 60  # stop early so the log always gets saved
-SLEEP_MIN, SLEEP_MAX = 45, 90
+SLEEP_MIN, SLEEP_MAX = 60, 150            # slower, human-like pacing helps deliverability
+WARMUP = _env("WARMUP", "true").lower() == "true"   # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Himalaya IT")
 COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")           # REQUIRED to email US businesses (CAN-SPAM)
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603, casa grande-1, CHI v, Greater Noida, Up, India")           # REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 COMPANY_PITCH = _env(
     "COMPANY_PITCH",
@@ -110,7 +112,7 @@ MODEL = _env("GEMINI_MODEL", "gemini-2.5-flash")        # change here if Google 
 LOG_CSV = "sent_log.csv"
 CALL_CSV = "call_list.csv"
 SUPPRESS_FILE = "suppression.txt"
-LOG_FIELDS = ["date", "business", "city", "website", "domain", "email", "subject", "main_issue", "status", "message_id"]
+LOG_FIELDS = ["date", "business", "city", "website", "domain", "email", "subject", "main_issue", "status", "message_id", "country"]
 CALL_FIELDS = ["date", "business", "category", "city", "country", "website", "phone", "email", "instagram", "facebook",
                "rating", "reviews", "main_issue", "what_to_say"]
 BLOCKING_STATUSES = {"sent", "no_email", "no_issue", "weak", "bad_email", "dup_email"}
@@ -279,10 +281,26 @@ def parse_json(text: str, want=dict):
 # ─────────────────────────────────────────────
 # STATE
 # ─────────────────────────────────────────────
+def migrate_csv(path: str, fields: list) -> None:
+    """If an older file has different columns, rewrite it with the new columns (nothing is lost)."""
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        old, rows = reader.fieldnames or [], list(reader)
+    if old == fields:
+        return
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k, "") for k in fields})
+
+
 def ensure_log() -> None:
     if not os.path.exists(LOG_CSV):
         with open(LOG_CSV, "w", newline="", encoding="utf-8") as f:
             csv.DictWriter(f, fieldnames=LOG_FIELDS).writeheader()
+    else:
+        migrate_csv(LOG_CSV, LOG_FIELDS)
 
 
 def load_rows() -> list:
@@ -329,6 +347,18 @@ def load_suppressed() -> set:
 def count_today(rows: list, status: str) -> int:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     return sum(1 for r in rows if r.get("status") == status and (r.get("date") or "").startswith(today))
+
+
+def effective_daily_limit(rows: list) -> int:
+    """New senders must ramp up slowly or Gmail files everything in spam: 3/day, then 5, 8, then the full limit."""
+    if not WARMUP:
+        return DAILY_LIMIT
+    firsts = [d for d in (parse_dt(r.get("date")) for r in rows if r.get("status") == "sent") if d]
+    if not firsts:
+        return min(DAILY_LIMIT, 3)
+    age = (datetime.now(timezone.utc) - min(firsts)).days
+    cap = 3 if age < 7 else 5 if age < 14 else 8 if age < 28 else DAILY_LIMIT
+    return min(DAILY_LIMIT, cap)
 
 
 _call_seen: set = set()
@@ -881,7 +911,7 @@ def verify_email(email: str) -> tuple:
 # ─────────────────────────────────────────────
 # EMAIL WRITING
 # ─────────────────────────────────────────────
-BANNED = re.compile(r"guarantee|100%|best price|cheapest|act now|limited time|[$₹€£]\s?\d", re.I)
+BANNED = re.compile(r"guarantee|100%|best price|cheapest|act now|limited time|\bfree\b|\bofferr?\b|[$₹€£]\s?\d", re.I)
 
 
 def write_email(biz: dict, issues: list, website: str) -> Optional[dict]:
@@ -892,15 +922,15 @@ def write_email(biz: dict, issues: list, website: str) -> Optional[dict]:
         facts = (f"\nFACT FROM GOOGLE MAPS (optional, mention at most once, numbers exactly as given): "
                  f"rated {biz['rating']} from {biz['reviews']} reviews.\n")
     if no_site:
-        opening = ("- Sentence 1: say we found their business on Google Maps but it lists no website of its own, and what "
-                   "that costs them (people who search cannot see services or contact options; competitors with a site win the enquiry).")
+        opening = ("- Sentence 1: say you found their business on Google Maps but it lists no website of its own, and what "
+                   "that costs them (people who search cannot see services or contact options).")
         target = "their Google Maps listing (no website listed)"
     else:
-        opening = ("- Sentence 1: say we looked at their website and name the MAIN problem (finding #1) in plain words, "
+        opening = ("- Sentence 1: say you looked at their website and name the MAIN problem (finding #1) in plain words, "
                    "and what it costs them (lost enquiries, lower Google ranking, visitors leaving).")
         target = f"website: {website}"
     prompt = f"""
-Write a short cold email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
+Write a short email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}, {target}).
 
 ABOUT US: {COMPANY_PITCH}
@@ -910,14 +940,14 @@ WHAT WE FOUND (the ONLY facts you may state about their business):
 {findings}
 {facts}
 RULES:
-- Plain text, 90 to 130 words, no markdown, no emojis.
-- Start with "Hi," (we do not know the owner's name). Do not write a signature or sign-off; it is added automatically.
+- Plain text, 50 to 90 words, no markdown, no emojis, no links, no bullet points.
+- Sound like one person writing to another, not like a marketing email. Start with "Hi,". Do not write a signature or sign-off; it is added automatically.
 {opening}
 - Optionally mention finding #2 in one short clause. Do not mention anything not in the list.
-- Then one sentence on who we are, one on what we will do, and say we can do it in {DELIVERY_DAYS}.
-- End with a soft call to action: reply "yes" and we will send a short free one-page {"plan for their site" if no_site else "report of the fixes"}.
+- One sentence on who we are and what we would do, and that we can do it in {DELIVERY_DAYS}.
+- End with ONE simple question, for example whether they would like a short list of what you would change. Never use the word "free".
 - Do NOT invent clients, results, statistics, prices, awards or guarantees. No hype, no urgency tricks.
-- Subject: under 60 characters, specific to their business, not clickbait, no ALL CAPS, no "!".
+- Subject: under 50 characters, plain and specific to their business, no "!", no ALL CAPS, not "quick question", no "offer".
 
 Return ONLY JSON: {{"subject": "...", "body": "..."}}
 """
@@ -927,38 +957,56 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
             continue
         subject, body = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
         words = len(body.split())
-        if (subject and 60 <= words <= 170 and not re.search(r"\[[^\]]+\]|\{[^}]+\}", body + subject)
+        if (subject and 40 <= words <= 120 and not re.search(r"\[[^\]]+\]|\{[^}]+\}|https?://|www\.", body + subject)
                 and not BANNED.search(body + " " + subject)):
-            return {"subject": subject[:90], "body": body}
+            return {"subject": subject[:70], "body": body}
         log.warning(f"Rejected generated email (words={words}); retrying")
     return None
 
 
 def fallback_email(biz: dict, issues: list, website: str) -> dict:
+    """Template used when Gemini is unavailable. Three wordings so the emails are not identical."""
     main = ISSUE_PHRASES.get(issues[0]["key"], "there are a few fixable issues on the site")
     no_site = issues[0]["key"] == "no_website"
     extra = ""
-    if len(issues) > 1 and issues[1]["severity"] >= 2:
+    if len(issues) > 1 and issues[1]["severity"] >= 2 and not no_site:
         extra = f" I also noticed {ISSUE_PHRASES.get(issues[1]['key'], 'another fixable issue')}."
-    intro = (f"I came across {biz['name']} on Google Maps and noticed that {main}." if no_site
-             else f"I took a look at {website} and noticed that {main}.{extra}")
-    what = ("We build fast, mobile-friendly websites with call and WhatsApp buttons" if no_site
-            else "We build modern websites and apps and fix existing ones: speed, mobile layout, SEO and lead capture")
-    body = (
-        "Hi,\n\n"
-        f"{intro} Issues like this can mean lost enquiries and customers choosing a competitor.\n\n"
-        f"I'm with {COMPANY_NAME}, a web and software development team. {what}, and we can have this done in {DELIVERY_DAYS}.\n\n"
-        f"If you'd like, reply \"yes\" and we'll send a short free one-page {'plan for your site' if no_site else 'report of the fixes'}."
-    )
-    return {"subject": f"Quick note about {biz['name']}"[:90], "body": body}
+    site = (website or "").replace("https://", "").replace("http://", "").rstrip("/")
+    v = sum(ord(c) for c in biz["name"]) % 3
+    name = biz["name"]
+    if no_site:
+        intros = [f"I came across {name} on Google Maps and noticed that {main}.",
+                  f"I was looking at {name} on Google Maps. {main[0].upper() + main[1:]}.",
+                  f"{name} showed up when I searched Google Maps, but {main}."]
+        what = ["We build simple, fast websites with call and WhatsApp buttons", "We're a small web team that builds simple sites",
+                "We build fast, mobile-friendly websites for local businesses"]
+        ask = ["Would it help if I sent a quick idea of what your site could look like?",
+               "Want me to send a short outline of what I'd build?", "Would you like me to send a quick plan?"]
+        subjects = [f"{name} on Google", f"A website for {name}", f"About {name}'s online listing"]
+    else:
+        intros = [f"I was looking at {site} and noticed that {main}.{extra}",
+                  f"{site} caught my eye: {main}.{extra}",
+                  f"I had a look at {site}. One thing stood out: {main}.{extra}"]
+        what = ["We fix this kind of thing for local businesses", "We're a small web team that fixes exactly this",
+                "We handle fixes like this regularly"]
+        ask = ["Would it help if I sent a short list of what I'd change?", "Want me to send the short list of fixes?",
+               "Would you like a short list of what I'd fix?"]
+        subjects = [f"{name} website", f"About {site}", f"A note on {name}'s website"]
+    body = (f"Hi,\n\n{intros[v]} That can quietly cost a business enquiries.\n\n"
+            f"I'm with {COMPANY_NAME}. {what[v]}, usually within {DELIVERY_DAYS}. {ask[v]}")
+    return {"subject": subjects[v][:70], "body": body}
 
 
-def signature() -> str:
+def signature(country: str = "", followup: bool = False) -> str:
+    """Minimal signature: no links in a first email. The postal address is added for US recipients (CAN-SPAM)."""
     lines = ["", "Regards,", SENDER_NAME, COMPANY_NAME]
-    for extra in (COMPANY_PHONE, COMPANY_SITE, COMPANY_ADDRESS):
-        if extra:
-            lines.append(extra)
-    lines += ["", "P.S. If this isn't relevant, just reply \"no\" and I won't email you again."]
+    if COMPANY_PHONE:
+        lines.append(f"WhatsApp / call: {COMPANY_PHONE}")
+    if followup and COMPANY_SITE:
+        lines.append(COMPANY_SITE)
+    if COMPANY_ADDRESS and country == "United States":
+        lines.append(COMPANY_ADDRESS)
+    lines += ["", "If this isn't relevant, just reply \"no\" and I won't write again."]
     return "\n".join(lines)
 
 
@@ -977,7 +1025,6 @@ def send_email(to_email: str, subject: str, body: str, in_reply_to: Optional[str
     if in_reply_to:
         msg["In-Reply-To"] = in_reply_to
         msg["References"] = in_reply_to
-    msg["List-Unsubscribe"] = f"<mailto:{EMAIL_USER or FROM_EMAIL}?subject=unsubscribe>"
     msg.attach(MIMEText(body, "plain", "utf-8"))
     try:
         smtp_cls = smtplib.SMTP_SSL if SMTP_PORT == 465 else smtplib.SMTP
@@ -1052,7 +1099,7 @@ def sync_inbox() -> Optional[dict]:
             return None
         replied, bounced = signals
         for first, _, email in pending:
-            base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue")}
+            base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue", "country")}
             if email in bounced:
                 record({**base, "status": "bounced"})
                 bounced_n += 1
@@ -1070,12 +1117,13 @@ def sync_inbox() -> Optional[dict]:
 
 def followup_body(row: dict) -> str:
     phrase = ISSUE_PHRASES.get(row.get("main_issue", ""), "there are a few fixable issues on the site")
+    target = (row.get("website") or "").replace("https://", "").replace("http://", "").rstrip("/") \
+        or row.get("business") or "your business"
     return (
         "Hi,\n\n"
-        f"Just a quick follow-up on my note from a few days ago about {row.get('website') or row.get('business') or 'your business'}. "
+        f"Just following up on my note from a few days ago about {target}. "
         f"The main thing I noticed: {phrase}.\n\n"
-        "If it helps, reply \"yes\" and I'll send a free one-page report with the fixes. "
-        f"If you'd like us to handle it, it takes about {DELIVERY_DAYS}.\n"
+        f"If it's useful, I can send a short list of fixes. If you'd like us to handle it, it takes about {DELIVERY_DAYS}.\n"
     )
 
 
@@ -1100,9 +1148,9 @@ def run_followups(suppressed: set, limit: int) -> int:
     for first, email in due:
         if sent >= limit or time.time() - START_TS > MAX_RUNTIME_S:
             break
-        base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue")}
+        base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue", "country")}
         subject = "Re: " + (first.get("subject") or "your website")
-        body = followup_body(first) + "\n" + signature()
+        body = followup_body(first) + "\n" + signature(first.get("country", ""), followup=True)
         print(f"\n--- FOLLOW-UP to {email} ---\n{body}")
         mid = send_email(email, subject, body, in_reply_to=first.get("message_id") or None)
         if mid:
@@ -1121,7 +1169,8 @@ _seen_emails: set = set()
 def process_lead(biz: dict, suppressed: set) -> bool:
     """True if an email was sent (or drafted in dry-run). Handles businesses with AND without a website."""
     host, key = biz["host"], biz["key"]
-    base = {"business": biz["name"], "city": biz["city"], "website": f"https://{host}" if host else "", "domain": key}
+    base = {"business": biz["name"], "city": biz["city"], "website": f"https://{host}" if host else "", "domain": key,
+            "country": biz.get("country", "")}
 
     r = None
     if host:
@@ -1172,7 +1221,7 @@ def process_lead(biz: dict, suppressed: set) -> bool:
 
     target = r.url if r is not None else ""
     mail = write_email(biz, issues, target) or fallback_email(biz, issues, target)
-    body = mail["body"] + "\n" + signature()
+    body = mail["body"] + "\n" + signature(biz.get("country", ""))
 
     print("\n" + "=" * 60)
     print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {target or 'no website'}  [{biz.get('source', '')}]")
@@ -1237,6 +1286,8 @@ def main() -> None:
     _seen_emails.update(load_seen_emails(rows))
     usage = load_usage()
     done, followups, paused = 0, 0, False
+    eff_limit = DAILY_LIMIT if DRY_RUN else effective_daily_limit(rows)
+    log.info(f"Today's sending cap: {eff_limit} (warm-up {'on' if WARMUP else 'off'}, max {DAILY_LIMIT})")
 
     if not DRY_RUN:
         stats = sync_inbox()
@@ -1246,9 +1297,9 @@ def main() -> None:
             paused = stats["paused"]
             if paused:
                 log.error(f"🛑 Bounce rate {stats['bounce_rate']:.0%} is too high: no new emails until it recovers.")
-            followups = run_followups(suppressed, FOLLOWUP_LIMIT - count_today(rows, "followup_sent"))
+            followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
 
-    remaining = DAILY_LIMIT - (0 if DRY_RUN else count_today(rows, "sent"))
+    remaining = eff_limit - (0 if DRY_RUN else count_today(rows, "sent"))
     if paused or remaining <= 0:
         log.info("Nothing to send today (paused or daily limit reached).")
     else:
