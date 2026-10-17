@@ -11,7 +11,7 @@ on:
       dry_run:
         description: "Dry run (write emails but do NOT send)"
         required: false
-        default: "true"
+        default: false"
         type: choice
         options: ["true", "false"]
 
