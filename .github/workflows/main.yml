@@ -3,20 +3,26 @@ name: Himalaya IT Outreach Engine
 on:
   schedule:
     # Three runs per weekday so each region is emailed during ITS business hours (times in UTC)
-    - cron: "30 9 * * 1-5"    # India / Asia-Pacific morning
-    - cron: "0 9 * * 1-5"     # Europe / Middle East / Africa / India afternoon
-    - cron: "30 16 * * 1-5"   # Americas morning
+    - cron: "30 4 * * 1-5"     # India / Asia-Pacific morning
+    - cron: "0 9 * * 1-5"      # Europe / Middle East / Africa / India afternoon
+    - cron: "30 16 * * 1-5"    # Americas morning
   workflow_dispatch:
     inputs:
       dry_run:
         description: "Dry run (write emails but do NOT send)"
         required: false
-        default: false"
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+      force_resume:
+        description: "Ignore the bounce-rate pause for this run"
+        required: false
+        default: "false"
         type: choice
         options: ["true", "false"]
 
 permissions:
-  contents: write             # needed to commit the logs back to the repo
+  contents: write              # needed to commit the logs back to the repo
 
 concurrency:
   group: outreach
@@ -51,11 +57,16 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-          # Scheduled runs send for real; manual runs default to a dry run that ignores local business hours
+          # Scheduled runs send for real; manual runs follow the dry_run input and ignore local business hours
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
           BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
+          FORCE_RESUME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_resume || 'false' }}
           DAILY_LIMIT: "10"
-          COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}   # optional repo Variable; needed to email US businesses
+          # Bounce guard: pauses only after >= 30 sends AND >= 4 bounces AND rate above 15%. Tune via repo Variables.
+          BOUNCE_PAUSE_RATE: ${{ vars.BOUNCE_PAUSE_RATE || '0.15' }}
+          BOUNCE_MIN_SAMPLE: ${{ vars.BOUNCE_MIN_SAMPLE || '30' }}
+          BOUNCE_MIN_COUNT: ${{ vars.BOUNCE_MIN_COUNT || '4' }}
+          COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}   # repo Variable; needed to email US businesses
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
 
@@ -64,7 +75,7 @@ jobs:
         run: |
           git config user.name "himalaya-bot"
           git config user.email "himalaya-bot@users.noreply.github.com"
-          for f in sent_log.csv call_list.csv api_usage.json; do [ -f "$f" ] && git add "$f"; done || true
+          for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json; do [ -f "$f" ] && git add "$f"; done || true
           git diff --staged --quiet || (git commit -m "chore: update logs" && git pull --rebase --autostash && git push)
 
       - name: Upload Log as Artifact
