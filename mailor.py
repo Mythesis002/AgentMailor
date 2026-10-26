@@ -1,5 +1,5 @@
 """
-Himalaya IT Outreach Engine v5  (businesses worldwide, Google Maps data via RapidAPI)
+Himalaya IT Outreach Engine v6  (businesses worldwide, Google Maps data via RapidAPI)
 
 Per run:
   0. Sync inbox: mark replies / bounces, pause sending if the bounce rate is too high
@@ -56,19 +56,10 @@ log = logging.getLogger("himalaya")
 # ─────────────────────────────────────────────
 # CONFIG  (secrets from env, never hardcode)
 # ─────────────────────────────────────────────
-# ── LOCAL TESTING ONLY ───────────────────────────────────────────────────────────
-# Paste keys here to test on your own computer. Environment variables / GitHub Secrets win over this block.
-# REMOVE these values before you upload this file to GitHub (the script warns you if it finds them there).
-LOCAL_TEST = {
-    "RAPIDAPI_KEY": "628e474f5amsh0457d8f1b4fb50cp16b75cjsn70408f276e9b",
-    "GEMINI_API_KEY": "AIzaSyDL6mu7ePmgpPgz-Lgp-uS9VMj4eitHbM4",
-    "EMAIL_USER": "ashishsinghbag02@gmail.com",
-    "EMAIL_PASS": "mamppvuvxekabqkx",
-}
-
-
+# Secrets come ONLY from environment variables (GitHub Actions secrets, or `export` / a shell session when testing
+# locally). NEVER paste keys into this file: the repo is public and git history keeps them forever.
 def _env(name: str, default: str = "") -> str:
-    return os.environ.get(name) or LOCAL_TEST.get(name) or default
+    return os.environ.get(name) or default
 
 
 RAPIDAPI_KEY = _env("RAPIDAPI_KEY")
@@ -91,7 +82,10 @@ MAX_COMBOS_PER_RUN = int(_env("MAX_COMBOS", "4"))
 LEADS_PER_SEARCH = int(_env("LEADS_PER_SEARCH", "25"))
 FOLLOWUP_AFTER_DAYS = int(_env("FOLLOWUP_AFTER_DAYS", "3"))
 FOLLOWUP_MAX_AGE_DAYS = int(_env("FOLLOWUP_MAX_AGE_DAYS", "14"))
-BOUNCE_PAUSE_RATE = float(_env("BOUNCE_PAUSE_RATE", "0.10"))
+BOUNCE_PAUSE_RATE = float(_env("BOUNCE_PAUSE_RATE", "0.15"))
+BOUNCE_MIN_SAMPLE = int(_env("BOUNCE_MIN_SAMPLE", "30"))   # never judge the bounce rate on fewer sends than this
+BOUNCE_MIN_COUNT = int(_env("BOUNCE_MIN_COUNT", "4"))      # ...and never pause for fewer bounces than this
+FORCE_RESUME = _env("FORCE_RESUME", "false").lower() == "true"   # manual override of the bounce pause
 MAX_RUNTIME_S = int(_env("MAX_RUNTIME_MIN", "40")) * 60  # stop early so the log always gets saved
 SLEEP_MIN, SLEEP_MAX = 60, 150            # slower, human-like pacing helps deliverability
 WARMUP = _env("WARMUP", "true").lower() == "true"   # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
@@ -100,7 +94,7 @@ SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Himalaya IT")
 COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603, casa grande-1, CHI v, Greater Noida, Up, India")           # REQUIRED to email US businesses (CAN-SPAM)
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # set as repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 COMPANY_PITCH = _env(
     "COMPANY_PITCH",
@@ -901,8 +895,11 @@ def verify_email(email: str) -> tuple:
     try:
         resolver = dns.resolver.Resolver()
         resolver.lifetime = 8
-        if not len(resolver.resolve(email.split("@")[-1], "MX")):
+        answers = resolver.resolve(email.split("@")[-1], "MX")
+        if not len(answers):
             return False, "no MX"
+        if all(str(a.exchange).rstrip(".") == "" for a in answers):   # RFC 7505 "null MX": domain accepts no mail
+            return False, "null MX"
         return True, "MX ok"
     except Exception as e:  # noqa: BLE001
         return False, f"MX lookup failed: {e}"
@@ -1110,7 +1107,8 @@ def sync_inbox() -> Optional[dict]:
 
     rate = bounced_n / recent if recent else 0.0
     stats = {"recent_sent": recent, "bounced": bounced_n, "replied": replied_n, "bounce_rate": rate,
-             "paused": recent >= 10 and rate > BOUNCE_PAUSE_RATE}
+             "paused": (not FORCE_RESUME and recent >= BOUNCE_MIN_SAMPLE and bounced_n >= BOUNCE_MIN_COUNT
+                        and rate > BOUNCE_PAUSE_RATE)}
     log.info(f"📊 Last {FOLLOWUP_MAX_AGE_DAYS} days: sent={recent} replied={replied_n} bounced={bounced_n} (rate {rate:.0%})")
     return stats
 
@@ -1263,15 +1261,38 @@ def make_report(site: str) -> str:
 
 
 # ─────────────────────────────────────────────
+# RUN SUMMARY (shown at the top of every GitHub Actions run)
+# ─────────────────────────────────────────────
+def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reason) -> None:
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    lines = ["## Outreach run summary", "", "| | |", "|---|---|",
+             f"| Result | **{reason}** |",
+             f"| New emails {'drafted' if DRY_RUN else 'sent'} | {done} |",
+             f"| Follow-ups sent | {followups} |",
+             f"| Daily cap (warm-up aware) | {cap} (slots left at start: {remaining}) |",
+             f"| City/category searches picked | {n_combos} |",
+             f"| RapidAPI calls today | {usage.get('calls', 0)} |"]
+    if stats:
+        lines.append(f"| Bounce rate (14 days) | {stats['bounced']}/{stats['recent_sent']} = {stats['bounce_rate']:.0%} "
+                     f"(pauses above {BOUNCE_PAUSE_RATE:.0%} once >= {BOUNCE_MIN_SAMPLE} sends and >= {BOUNCE_MIN_COUNT} bounces) |")
+        lines.append(f"| Replies (14 days) | {stats['replied']} |")
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+    except OSError:
+        pass
+
+
+# ─────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────
 def main() -> None:
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
-    log.info(f"🚀 Himalaya IT Outreach Engine v4 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | hours_only={BUSINESS_HOURS_ONLY}")
-    if os.environ.get("GITHUB_ACTIONS") == "true" and any(LOCAL_TEST.values()):
-        log.error("🔑 Keys are written inside mailor.py. Remove the LOCAL_TEST values and use GitHub Secrets instead!")
+    log.info(f"🚀 Himalaya IT Outreach Engine v6 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | hours_only={BUSINESS_HOURS_ONLY}")
     if not RAPIDAPI_KEY:
         log.warning("RAPIDAPI_KEY not set: using free OpenStreetMap discovery only")
     if not COMPANY_ADDRESS:
@@ -1285,7 +1306,7 @@ def main() -> None:
     seen, suppressed = load_seen(rows), load_suppressed()
     _seen_emails.update(load_seen_emails(rows))
     usage = load_usage()
-    done, followups, paused = 0, 0, False
+    done, followups, paused, stats, combos = 0, 0, False, None, []
     eff_limit = DAILY_LIMIT if DRY_RUN else effective_daily_limit(rows)
     log.info(f"Today's sending cap: {eff_limit} (warm-up {'on' if WARMUP else 'off'}, max {DAILY_LIMIT})")
 
@@ -1296,7 +1317,8 @@ def main() -> None:
         else:
             paused = stats["paused"]
             if paused:
-                log.error(f"🛑 Bounce rate {stats['bounce_rate']:.0%} is too high: no new emails until it recovers.")
+                log.error(f"🛑 PAUSED: bounce rate {stats['bounce_rate']:.0%} ({stats['bounced']}/{stats['recent_sent']}) is above "
+                          f"{BOUNCE_PAUSE_RATE:.0%}. No new emails until it recovers. Override: FORCE_RESUME=true")
             followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
 
     remaining = eff_limit - (0 if DRY_RUN else count_today(rows, "sent"))
@@ -1329,6 +1351,9 @@ def main() -> None:
 
     log.info(f"✅ Finished. {'Drafted' if DRY_RUN else 'Sent'} {done} new + {followups} follow-up(s). "
              f"API calls today: {usage['calls']}. Call list: {CALL_CSV}")
+    reason = ("PAUSED by bounce-rate guard" if paused else "daily cap reached" if remaining <= 0
+              else "no city in business hours right now" if not combos else "ok")
+    write_summary(done, followups, eff_limit, remaining, stats, len(combos), usage, reason)
 
 
 if __name__ == "__main__":
