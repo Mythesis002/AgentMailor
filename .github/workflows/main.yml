@@ -1,4 +1,4 @@
-name: Himalaya IT Outreach Engine
+name: Himalaya IT AI Call Agent Outreach
 
 on:
   schedule:
@@ -62,11 +62,20 @@ jobs:
           BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
           FORCE_RESUME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_resume || 'false' }}
           DAILY_LIMIT: "10"
+          # Only businesses scoring at least this on the "needs a call agent" fit score are contacted
+          SCORE_MIN: ${{ vars.SCORE_MIN || '6' }}
           # Bounce guard: pauses only after >= 30 sends AND >= 4 bounces AND rate above 15%. Tune via repo Variables.
           BOUNCE_PAUSE_RATE: ${{ vars.BOUNCE_PAUSE_RATE || '0.15' }}
           BOUNCE_MIN_SAMPLE: ${{ vars.BOUNCE_MIN_SAMPLE || '30' }}
           BOUNCE_MIN_COUNT: ${{ vars.BOUNCE_MIN_COUNT || '4' }}
-          COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}   # repo Variable; needed to email US businesses
+          # Repo Variables (Settings > Secrets and variables > Actions > Variables). All optional except COMPANY_ADDRESS for the US.
+          COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
+          SENDER_NAME: ${{ vars.SENDER_NAME }}
+          COMPANY_NAME: ${{ vars.COMPANY_NAME }}
+          COMPANY_PHONE: ${{ vars.COMPANY_PHONE }}
+          COMPANY_WEBSITE: ${{ vars.COMPANY_WEBSITE }}
+          COMPANY_WHO: ${{ vars.COMPANY_WHO }}
+          PRODUCT_PITCH: ${{ vars.PRODUCT_PITCH }}
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
 
@@ -75,7 +84,9 @@ jobs:
         run: |
           git config user.name "himalaya-bot"
           git config user.email "himalaya-bot@users.noreply.github.com"
-          for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json; do [ -f "$f" ] && git add "$f"; done || true
+          for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json suppression.txt; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
           git diff --staged --quiet || (git commit -m "chore: update logs" && git pull --rebase --autostash && git push)
 
       - name: Upload Log as Artifact
