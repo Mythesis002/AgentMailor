@@ -1,252 +1,262 @@
-date,business,city,website,domain,email,subject,main_issue,status,message_id,country
-2026-10-15 11:22,Neuberg Diagnostics,Chennai,https://neubergdiagnostics.com,neubergdiagnostics.com,,,,unreachable,,
-2026-10-15 11:23,Scans World,Chennai,https://scansworld.in,scansworld.in,scansworld@gmail.com,Scans World Website for Mobile Visitors,no_viewport,sent,<179206338015.2128.16228798850524042608@gmail.com>,
-2026-10-15 11:24,Aarthi Scans & Labs,Chennai,https://aarthiscan.com,aarthiscan.com,,,,unreachable,,
-2026-10-15 11:25,Lalchand Leeladevi Munoth Jain Medical Care,Chennai,https://llmjmc.org,llmjmc.org,support@llmjmc.org,Website improvements for Lalchand Leeladevi Munoth Jain Medical Care,no_lead_capture,sent,<179206350870.2128.8942723917938585593@gmail.com>,
-2026-10-15 11:29,"Sunetra Eye, Laser and Dental Care Centre",Ghaziabad,https://sunetra.co.in,sunetra.co.in,,,,no_issue,,
-2026-10-15 11:30,Yashoda Super speciality Hospital,Ghaziabad,https://yashodahospital.org,yashodahospital.org,admin.yhk@yashodahospital.org,Yashoda Hospital website speed and mobile experience,heavy_images,sent,<179206380043.2128.6951098590261730567@gmail.com>,
-2026-10-15 11:31,HOD Ghaziabad - House Of Diagnostics,Ghaziabad,https://hod.care,hod.care,,,,no_issue,,
-2026-10-15 11:31,Centre for Sight,Ghaziabad,https://centreforsight.com,centreforsight.com,,,,no_issue,,
-2026-10-15 11:31,Eye7 Chaudhary Eye Centre,Ghaziabad,https://eye7.in,eye7.in,info@eye7.in,Eye7 Chaudhary Eye Centre website performance,slow,sent,<179206389671.2128.10080693128919490557@gmail.com>,
-2026-10-15 11:32,Max Superspeciality Hospital,Ghaziabad,https://jointsurgerydelhi.com,jointsurgerydelhi.com,,,ssl_invalid,no_email,,
-2026-10-15 11:33,Rheuma Clinic,Ghaziabad,https://drsauvikdasgupta.in,drsauvikdasgupta.in,sauvikdasgupta@gmail.com,Rheuma Clinic: Homepage Heading & SEO,no_h1,sent,<179206398571.2128.7632999191543011011@gmail.com>,
-2026-10-15 11:34,"Sharp Sight Centre, Indirapuram",Ghaziabad,https://sharpsight.in,sharpsight.in,info@sharpsight.in,Sharp Sight Centre website speed,slow,sent,<179206408763.2128.9305813143519358419@gmail.com>,
-2026-10-16 07:05,Cafe Appetito - Alembic,Vadodara,https://cafeappetito.in,cafeappetito.in,,,no_lead_capture,no_email,,
-2026-10-16 08:13,Lalchand Leeladevi Munoth Jain Medical Care,Chennai,https://llmjmc.org,llmjmc.org,support@llmjmc.org,,no_lead_capture,bounced,,
-2026-10-16 08:13,Bhopal Guest House & Restaurant,Bhopal,,gmaps:ChIJG42S955DfDkR1FnxqCVgY7Y,,,no_website,no_email,,
-2026-10-16 08:13,Hotel Grand Stay,Bhopal,https://hotelgrandstaybhopal.cotravels.in,hotelgrandstaybhopal.cotravels.in,,,,no_issue,,
-2026-10-16 08:13,Bhopal Guest House and Restaurant,Bhopal,,gmaps:ChIJfW_l6uFDfDkRZy2ud-UogiQ,,,no_website,no_email,,
-2026-10-16 08:13,Aradhya Guest House,Bhopal,https://aradhyaguesthouse.com,aradhyaguesthouse.com,,,stale_year,weak,,
-2026-10-16 08:13,Grand Hotel,Bhopal,,gmaps:ChIJD_bFEgBpfDkRvg8kG38CbfU,,,no_website,no_email,,
-2026-10-16 08:13,DEEP GUEST HOUSE दीप गेस्ट हाउस,Bhopal,,gmaps:ChIJb1W0ozlDfDkRG2iWCKKz1Uw,,,no_website,no_email,,
-2026-10-16 08:13,Antra's Guest House,Bhopal,,gmaps:ChIJg6cTxMZDfDkRWFvVfaGb9AQ,,,no_website,no_email,,
-2026-10-16 08:13,Kanha Guest House,Bhopal,,gmaps:ChIJI6QGxL1CfDkRDUkKK60VqMU,,,no_website,no_email,,
-2026-10-16 08:13,Hotel Indigo Rooms,Bhopal,,gmaps:ChIJ2cKw6VRpfDkRXs8kTIyGtJQ,,,no_website,no_email,,
-2026-10-16 08:13,Hotel Chinar,Bhopal,,gmaps:ChIJIzCnOiRofDkREtRZXSu6944,,,no_website,no_email,,
-2026-10-16 08:13,Kanha Gold,Bhopal,,gmaps:ChIJb6Xy6CJofDkRi0j7eZdXKy8,,,no_website,no_email,,
-2026-10-16 08:13,Hotel Pathik Bhopal,Bhopal,,gmaps:ChIJM_NXGyVofDkRegr6Aj39Nm8,,,no_website,no_email,,
-2026-10-16 08:13,The Rest house,Bhopal,,gmaps:ChIJc1UE5SVBfDkRbLM1cyzSmA0,,,no_website,no_email,,
-2026-10-16 08:13,Akram Hostel Guest house home stay,"Neelbad, Bhopal",,gmaps:ChIJw12zbXNdfDkRm-BRcYAq__M,,,no_website,no_email,,
-2026-10-16 08:13,Hello Kanpur Tour & Travels / Tempo Traveller In Kanpur,Kanpur,https://hellokanpurtravels.in,hellokanpurtravels.in,,,no_h1,weak,,
-2026-10-16 08:13,Ghoomne Chale Tour and Travels,Kanpur,,gmaps:ChIJ9-AAJxmo7kIRVIxvjunvDz4,,,no_website,no_email,,
-2026-10-16 08:13,Welcome Kanpur Tour & Travels / Tempo Traveller In Kanpur,Kanpur,,gmaps:ChIJkalWoP5HnDkRZv8-9De5eyU,,,no_website,no_email,,
-2026-10-16 08:13,Khatu Shyam tour and travels,Kanpur,,gmaps:ChIJU25nHu1HnDkRFNt9_uBZ4Xw,,,no_website,no_email,,
-2026-10-16 08:13,Flight Risen Travels: International Travel Agency in Kanpur,Kanpur,https://flightrisentravels.com,flightrisentravels.com,,,heavy_images,weak,,
-2026-10-16 08:13,Kanpur Tour & Travels,Kanpur,https://kanpurtourandtravels.in,kanpurtourandtravels.in,,,no_quick_contact,weak,,
-2026-10-16 08:13,Gomti Tour & Travels,Kanpur,,gmaps:ChIJ_S1R7GlHnDkRXM1lU117nEk,,,no_website,no_email,,
-2026-10-16 08:13,Tour My India Travels - Tour And Travel Agency In Kanpur,Kanpur,https://tourmyindiatravels.in,tourmyindiatravels.in,,,no_quick_contact,weak,,
-2026-10-16 08:13,Esha Travels - Travel Agency in Kanpur,Kanpur,https://eshatravels.in,eshatravels.in,eshatravels1@gmail.com,Your Esha Travels website: security fix,no_https,sent,<179213841528.2131.10492118192521910612@gmail.com>,
-2026-10-16 08:14,AR Travels,Kanpur,,gmaps:ChIJveJqLA1HnDkR240wERHMiNY,,,no_website,no_email,,
-2026-10-16 08:14,Kanpur tour travels barra 8,Kanpur,https://sachinsachan012.wixsite.com,sachinsachan012.wixsite.com,,,,unreachable,,
-2026-10-16 08:14,STAR TOURS & TRAVELS,Kanpur,,gmaps:ChIJjfKjoVZHnDkROjtIxV1gTDg,,,no_website,no_email,,
-2026-10-16 08:14,Bhraman Bharat Tours,Kanpur,,gmaps:ChIJM7nBZyJHnDkRrI8lciJvYFI,,,no_website,no_email,,
-2026-10-16 08:15,Ideal Travel Visa & Buisness Consultant,Kanpur,https://idealtravel.world,idealtravel.world,,,heavy_images,weak,,
-2026-10-16 08:15,COMFORT TRAVELS,Kanpur,https://comforttravelsonline.com,comforttravelsonline.com,,,,no_issue,,
-2026-10-16 08:15,Al-jazeera tours & Travels services,Kanpur,https://aljazeeratravels.in,aljazeeratravels.in,,,no_quick_contact,weak,,
-2026-10-16 08:15,Al Baqar Tours & Travels,Kanpur,,gmaps:ChIJFZFuKRtHnDkRz5sWF9VrGZw,,,no_website,no_email,,
-2026-10-16 08:15,Nikhil Travels,Kanpur,,gmaps:ChIJnwFPRTpHnDkRC0x7_OTvi6A,,,no_website,no_email,,
-2026-10-16 08:15,Khan Travels,Kanpur,https://khantravels.co.in,khantravels.co.in,,,no_viewport,no_email,,
-2026-10-16 08:15,Rudra Tours And Travels Kanpur,Kanpur,https://toursbyrudra.com,toursbyrudra.com,,,,no_issue,,
-2026-10-16 08:15,Pahuja Travels,Kanpur,,gmaps:ChIJO-yVa-FHnDkRg1Gtp4lxm4Y,,,no_website,no_email,,
-2026-10-16 08:15,Kanpur Tour And Travels,Kanpur,https://kanpurtourandtravels.com,kanpurtourandtravels.com,,,,unreachable,,
-2026-10-16 08:15,R & A ENTERPRISES (TOUR & TRAVELS),Kanpur,https://shriraenterprises.com,shriraenterprises.com,,,stale_year,weak,,
-2026-10-16 08:15,Al Uqba Tours & Travels,Kanpur,,gmaps:ChIJLXKoTZw4nDkR_pvbnqCXW_I,,,no_website,no_email,,
-2026-10-16 08:15,Stockholm International School Primary School campus,Stockholm,https://stockholmis.se,stockholmis.se,,,no_meta_desc,weak,,
-2026-10-16 08:15,Vasa International School of Stockholm,Stockholm,https://vasainternationalschoolofstockholm.com,vasainternationalschoolofstockholm.com,,,no_quick_contact,weak,,
-2026-10-16 08:15,The Tanto School AB,Stockholm,https://tantoschool.se,tantoschool.se,,,no_quick_contact,weak,,
-2026-10-16 08:15,International School of Kungsholmen,Stockholm,https://internationalschoolofkungsholmen.com,internationalschoolofkungsholmen.com,,,no_quick_contact,weak,,
-2026-10-16 08:15,ProCivitas Private School,Stockholm,https://procivitas.se,procivitas.se,,,heavy_images,no_email,,
-2026-10-16 08:15,Gilda School AB,Stockholm,https://gildasalong.se,gildasalong.se,,,short_title,weak,,
-2026-10-16 08:15,International IT College of Sweden,Stockholm,https://arenaacademy.se,arenaacademy.se,,,ssl_invalid,no_email,,
-2026-10-16 08:16,Carlssons skola,Stockholm,https://carlssonsskola.se,carlssonsskola.se,info@carlssonsskola.se,Carlssons skola website observation,no_lead_capture,sent,<179213857316.2131.8317942851778147719@gmail.com>,
-2026-10-16 08:17,Nordic International school Essingen,Stockholm,https://nordicinternational.se,nordicinternational.se,,,no_alt,weak,,
-2026-10-16 08:17,Berlitz Stockholm,Stockholm,https://berlitz.se,berlitz.se,,,no_alt,weak,,
-2026-10-16 08:17,International School of the Stockholm Region,Stockholm,https://internationalschoolofthestockholmregion.stockholm,internationalschoolofthestockholmregion.stockholm,,,no_quick_contact,weak,,
-2026-10-16 08:17,SchoolParrot AB,Stockholm,https://schoolparrot.com,schoolparrot.com,,,no_lead_capture,no_email,,
-2026-10-16 08:17,Skandinaviska Musikskolan,Stockholm,https://skandinaviskamusikskolan.se,skandinaviskamusikskolan.se,,,no_lead_capture,no_email,,
-2026-10-16 08:17,Enskilda Gymnasiet,Stockholm,https://enskildagymnasiet.se,enskildagymnasiet.se,info@enskildagymnasiet.se,Enskilda Gymnasiet website contact issues,no_lead_capture,sent,<179213863702.2131.17178882770417945206@gmail.com>,
-2026-10-16 08:18,Stockholm International Academy Hägersten,Hägersten,,gmaps:ChIJyUTi9Ah3X0YR9k7P253uuys,,,no_website,no_email,,
-2026-10-16 08:18,Gamla Stans Simskola,Stockholm,https://gamlastanssimskola.se,gamlastanssimskola.se,,,mixed_content,weak,,
-2026-10-16 08:18,Make Up Institute Stockholm,Stockholm,https://makeupinstitute.com,makeupinstitute.com,,,no_quick_contact,weak,,
-2026-10-16 08:18,Rockskolan Stockholm Hötorget,Stockholm,https://rockskolan.com,rockskolan.com,,,no_title,weak,,
-2026-10-16 08:18,Engelska Skolan Novia,Stockholm,,gmaps:ChIJmfNye8B3X0YRuC27k0Bqt5k,,,no_website,no_email,,
-2026-10-16 08:18,Settle Into Stockholm,Stockholm,https://settleintostockholm.com,settleintostockholm.com,,,no_quick_contact,weak,,
-2026-10-16 08:19,Swedish-Finnish School in Stockholm,Stockholm,https://sverigefinskaskolan.eu,sverigefinskaskolan.eu,info@sverigefinskaskolan.eu,Website observation for Swedish-Finnish School,no_quick_contact,sent,<179213874382.2131.7194380609750485994@gmail.com>,
-2026-10-16 08:20,MINT DENTAL SOLUTIONS,Guwahati,,gmaps:ChIJIQTMel1bWjcRL_iDJDkbVA4,,,no_website,no_email,,
-2026-10-16 08:20,City Dental Clinic,Guwahati,,gmaps:ChIJ19Z9GcRbWjcRDrqtMFk23V4,,,no_website,no_email,,
-2026-10-16 08:20,DENTAL SENSE,Guwahati,,gmaps:ChIJ6yLrDk9bWjcRvLUWBFhLe-E,,,no_website,no_email,,
-2026-10-16 08:20,Real Smile Dental Center,Guwahati,https://realsmiledentalcenter.com,realsmiledentalcenter.com,,,short_title,weak,,
-2026-10-16 08:20,DentoShine Dental Clinic,Guwahati,https://dentoshineaesthethic.in,dentoshineaesthethic.in,,,no_meta_desc,weak,,
-2026-10-16 08:20,Maruti Dental Clinic,Guwahati,,gmaps:ChIJoab7wOlbWjcR8uFRiBNkVb0,,,no_website,no_email,,
-2026-10-16 08:20,FAMILY DENTAL CLINIC,Guwahati,https://dentistguwahati.in,dentistguwahati.in,,,,no_issue,,
-2026-10-16 08:20,"Smartcity Dental Clinic, Lal Ganesh, Guwahati",Guwahati,https://smartcitydental.in,smartcitydental.in,,,stale_year,weak,,
-2026-10-16 08:20,Dr.Gitarthy's Apex Dental Clinic: Hengerabari,Guwahati,https://apexdentalghy.com,apexdentalghy.com,,,no_alt,weak,,
-2026-10-16 08:20,MEDINOVA - MULTISPECIALITY DENTAL CLINIC,Guwahati,https://medinovadentalghy.in,medinovadentalghy.in,,,no_meta_desc,weak,,
-2026-10-16 08:20,TEETH CARE MULTISPECIALITY DENTAL CLINIC,Guwahati,,gmaps:ChIJ57CB2SpbWjcRMyIEppSp1t8,,,no_website,no_email,,
-2026-10-16 08:20,Radiant Dental Care,Guwahati,,gmaps:ChIJwW0H0ktZWjcRLa3_ZNLXibk,,,no_website,no_email,,
-2026-10-16 08:20,Dr Rounak Jain’s dental centre braces and orthodontics.,Guwahati,,gmaps:ChIJi1hPO1tbWjcRv6ptQojUE1g,,,no_website,no_email,,
-2026-10-16 08:20,Smile Care Dental Clinic,Guwahati,,gmaps:ChIJ8yIIWi1bWjcRmFNqhaglNPk,,,no_website,no_email,,
-2026-10-16 08:20,Dr. Udeshna's Multispeciality Dental Care,Guwahati,https://drudeshnamultispecialitydental.com,drudeshnamultispecialitydental.com,,,no_alt,weak,,
-2026-10-16 08:21,Smile Dental care,Guwahati,https://smiledentalcare.in,smiledentalcare.in,,,no_lead_capture,no_email,,
-2026-10-16 08:21,Pearl 32 Dental Spa & Cosmetic Clinic,Guwahati,https://oxyfind.com,oxyfind.com,,,no_meta_desc,weak,,
-2026-10-16 08:21,Guwahati Dental Clinic,Guwahati,,gmaps:ChIJCRiXhwlZWjcR3_vvIVnjKIk,,,no_website,no_email,,
-2026-10-16 08:21,Truesmile Oral and Dental Clinic (Branch - 2) - Best Dental Clinic | Dental Clinic Near me in Guwahati,Guwahati,,gmaps:ChIJpQy5S5FbWjcRfb2FXQ0jeOc,,,no_website,no_email,,
-2026-10-16 08:21,DENTAL CENTRAL - Multispeciality Aesthetic & Orthodontic Clinic,Guwahati,https://dentalcentral.in,dentalcentral.in,,,,no_issue,,
-2026-10-16 13:48,Pata Pata African Resturant,Johannesburg,,gmaps:ChIJJYivd4YOlR4Rzk1ohAun13w,,,no_website,no_email,,
-2026-10-16 13:48,Flames,Johannesburg,https://fourseasons.com,fourseasons.com,,,,unreachable,,
-2026-10-16 13:48,Yeoville Dinner Club,Johannesburg,,gmaps:ChIJ7Xegcs0NlR4RWM_j_h8x_P0,,,no_website,no_email,,
-2026-10-16 13:48,Love Revo Maboneng,Johannesburg,https://getbestweb.site,getbestweb.site,,,no_quick_contact,weak,,
-2026-10-16 13:48,Thorn Restaurant,Johannesburg,,gmaps:ChIJhegIQSQPlR4Rc0SSa5YyNOo,,,no_website,no_email,,
-2026-10-16 13:48,Exotically Divine ital,Johannesburg,,gmaps:ChIJNStHqx4PlR4Rh4CHIpSYgnE,,,no_website,no_email,,
-2026-10-16 13:48,94 Main Eatery,Johannesburg,,gmaps:ChIJicc-4RsPlR4R5k7Tdk6TobU,,,no_website,no_email,,
-2026-10-16 13:48,The Royal Park Restaurant,Johannesburg,,gmaps:ChIJe1sb2voNlR4RpPwXJ6TY7zM,,,no_website,no_email,,
-2026-10-16 13:48,Nova bistro restaurant,Johannesburg,https://novabistro.co.za,novabistro.co.za,,,no_quick_contact,weak,,
-2026-10-16 13:49,YML Eatery,Johannesburg South,https://ymleatery.co.za,ymleatery.co.za,,,no_viewport,no_email,,
-2026-10-16 13:49,Confluence Restaurant,Johannesburg,https://confluence.joburg,confluence.joburg,eat@confluence.joburg,Confluence.joburg mobile experience,heavy_images,sent,<179215856079.2026.16278339747468161595@gmail.com>,
-2026-10-16 13:50,Taste kitchen,Johannesburg,,gmaps:ChIJN0Fj9V4PlR4Rm9TSMONyLjw,,,no_website,no_email,,
-2026-10-16 13:50,Abandoned Kitchen,Johannesburg,,gmaps:ChIJAUlu1QUNlR4ReT-3ImBdRk0,,,no_website,no_email,,
-2026-10-16 13:50,Little Addis Cafe,Johannesburg,,gmaps:ChIJ_eSr0IUOlR4RceJQZhof2ZU,,,no_website,no_email,,
-2026-10-16 13:50,Tau Eats,Johannesburg,,gmaps:ChIJnTyyENQNlR4Raly365JTj2I,,,no_website,no_email,,
-2026-10-16 13:50,Kraal Restaurant,Johannesburg South,https://thabahotel.co.za,thabahotel.co.za,,,,no_issue,,
-2026-10-16 13:50,Jojo Rooftop Lounge,Johannesburg,https://jojorooftoplounge.co.za,jojorooftoplounge.co.za,,,,no_issue,,
-2026-10-16 13:50,Soul food hive,Johannesburg,,gmaps:ChIJYx7h6H4PlR4RyONMOqldcnQ,,,no_website,no_email,,
-2026-10-16 13:50,The Mark's Kitchen_Hillbrow,Johannesburg,,gmaps:ChIJdbSkNzsMlR4Rz8PbCJhCpgo,,,no_website,no_email,,
-2026-10-16 13:50,Bonne Appetit Restaurant & Chisa Nyama,Johannesburg,,gmaps:ChIJWRidTZwOlR4Rz9_fzh88QQQ,,,no_website,no_email,,
-2026-10-16 13:50,The Rooftop Restaurant,Johannesburg,https://rooftopcafe.co.za,rooftopcafe.co.za,,,no_meta_desc,weak,,
-2026-10-16 13:50,The Pot Luck Club Johannesburg,Johannesburg,https://thepotluckclubjhb.co.za,thepotluckclubjhb.co.za,,,no_quick_contact,weak,,
-2026-10-16 13:50,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,The Radnor Rooms website: mobile experience,no_viewport,sent,<179215865749.2026.17799714532364880697@gmail.com>,
-2026-10-16 13:52,Park Street Events & Wedding Venue,Bristol,https://17parkstreet.co.uk,17parkstreet.co.uk,,,no_quick_contact,weak,,
-2026-10-16 13:52,The Elmgrove Centre,Bristol,https://theelmgrovecentre.co.uk,theelmgrovecentre.co.uk,info@theelmgrovecentre.co.uk,Quick thought on The Elmgrove Centre website,no_quick_contact,sent,<179215875072.2026.2803785944581602974@gmail.com>,
-2026-10-16 13:53,"The Forge, Bristol",Bristol,https://theforgebristol.com,theforgebristol.com,bookings@theforgebristol.com,"Website speed and leads for The Forge, Bristol",heavy_images,sent,<179215881956.2026.12466795381792690557@gmail.com>,
-2026-10-16 13:54,Merchants' Hall,Bristol,https://merchants-hall.com,merchants-hall.com,,,no_quick_contact,weak,,
-2026-10-16 13:54,The Bristol Pavilion,Bristol,https://thebristolpavilion.co.uk,thebristolpavilion.co.uk,,,no_quick_contact,no_email,,
-2026-10-16 13:56,Brown & Bye,Bristol,https://brownandbye.com,brownandbye.com,enquiry@brownandbye.com,Brown & Bye: Website speed and lead capture,heavy_images,sent,<179215898398.2026.8914704778517900827@gmail.com>,
-2026-10-16 13:57,Paintworks Event Space,Bristol,https://paintworksevents.co.uk,paintworksevents.co.uk,,,no_quick_contact,weak,,
-2026-10-16 13:57,Mansion House Bristol,Avon,https://mansionhousebristol.co.uk,mansionhousebristol.co.uk,,,no_viewport,no_email,,
-2026-10-16 13:57,University Literary Club,Bristol,https://unilit.co.uk,unilit.co.uk,,,no_quick_contact,weak,,
-2026-10-16 13:57,The Orangery,Bristol,https://bristol.ac.uk,bristol.ac.uk,,,,no_issue,,
-2026-10-16 13:57,The Square Club,Bristol,https://thesquareclub.com,thesquareclub.com,,,,no_issue,,
-2026-10-16 13:57,Frenchay Village Hall,Bristol,,gmaps:ChIJWdAvmhCQcUgRwfa98g4t6yw,,,no_website,no_email,,
-2026-10-16 13:57,St Michaels Parish Hall,Bristol,https://stmichaelsparishhall.co.uk,stmichaelsparishhall.co.uk,,,no_quick_contact,weak,,
-2026-10-16 13:57,Anson Rooms,Bristol,https://bristolsu.org.uk,bristolsu.org.uk,,,no_quick_contact,weak,,
-2026-10-16 13:57,Leigh Court,Bristol,https://leighcourt.co.uk,leighcourt.co.uk,,,no_quick_contact,weak,,
-2026-10-16 13:57,Province Of Bristol Masonic Hall,Bristol,https://provinceofbristol.org.uk,provinceofbristol.org.uk,,,ssl_invalid,no_email,,
-2026-10-16 13:57,The Newman Hall,Bristol,https://newmanhall-bristol.co.uk,newmanhall-bristol.co.uk,,,,unreachable,,
-2026-10-16 13:57,Henbury Village Hall,Bristol,https://henburyvillagehall.org,henburyvillagehall.org,,,no_quick_contact,weak,,
-2026-10-16 13:57,Centurys Club,Bristol,https://centurysclub.co.uk,centurysclub.co.uk,,,no_h1,weak,,
-2026-10-16 13:57,Ven you,Bristol,,gmaps:ChIJP-IFz4WNcUgRrHLpLq0xqjI,,,no_website,no_email,,
-2026-10-16 19:38,Confluence Restaurant,Johannesburg,https://confluence.joburg,confluence.joburg,eat@confluence.joburg,,heavy_images,bounced,,
-2026-10-19 16:18,Scans World,Chennai,https://scansworld.in,scansworld.in,scansworld@gmail.com,Re: Scans World Website for Mobile Visitors,no_viewport,followup_sent,<179242668318.2160.8273644495556905833@gmail.com>,
-2026-10-19 16:20,Yashoda Super speciality Hospital,Ghaziabad,https://yashodahospital.org,yashodahospital.org,admin.yhk@yashodahospital.org,Re: Yashoda Hospital website speed and mobile experience,heavy_images,followup_sent,<179242682194.2160.55339699593786107@gmail.com>,
-2026-10-19 16:21,Eye7 Chaudhary Eye Centre,Ghaziabad,https://eye7.in,eye7.in,info@eye7.in,Re: Eye7 Chaudhary Eye Centre website performance,slow,followup_sent,<179242688938.2160.1533044718308584680@gmail.com>,
-2026-10-20 14:11,Rheuma Clinic,Ghaziabad,https://drsauvikdasgupta.in,drsauvikdasgupta.in,sauvikdasgupta@gmail.com,Re: Rheuma Clinic: Homepage Heading & SEO,no_h1,followup_sent,<179250547789.2119.18318699351255581902@gmail.com>,
-2026-10-20 14:12,"Sharp Sight Centre, Indirapuram",Ghaziabad,https://sharpsight.in,sharpsight.in,info@sharpsight.in,Re: Sharp Sight Centre website speed,slow,followup_sent,<179250556103.2119.15127132988892608038@gmail.com>,
-2026-10-20 14:15,Esha Travels - Travel Agency in Kanpur,Kanpur,https://eshatravels.in,eshatravels.in,eshatravels1@gmail.com,Re: Your Esha Travels website: security fix,no_https,followup_sent,<179250570114.2119.9482488278375435896@gmail.com>,
-2026-10-21 14:24,Carlssons skola,Stockholm,https://carlssonsskola.se,carlssonsskola.se,info@carlssonsskola.se,Re: Carlssons skola website observation,no_lead_capture,followup_sent,<179259263980.2210.15608151632434613023@gmail.com>,
-2026-10-21 14:25,Enskilda Gymnasiet,Stockholm,https://enskildagymnasiet.se,enskildagymnasiet.se,info@enskildagymnasiet.se,Re: Enskilda Gymnasiet website contact issues,no_lead_capture,followup_sent,<179259273018.2210.2040141865535292143@gmail.com>,
-2026-10-21 14:27,Swedish-Finnish School in Stockholm,Stockholm,https://sverigefinskaskolan.eu,sverigefinskaskolan.eu,info@sverigefinskaskolan.eu,Re: Website observation for Swedish-Finnish School,no_quick_contact,followup_sent,<179259282848.2210.6951463026087591358@gmail.com>,
-2026-10-22 14:24,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,Re: The Radnor Rooms website: mobile experience,no_viewport,followup_sent,<179267909216.2232.13410156234875547330@gmail.com>,
-2026-10-22 14:26,The Elmgrove Centre,Bristol,https://theelmgrovecentre.co.uk,theelmgrovecentre.co.uk,info@theelmgrovecentre.co.uk,Re: Quick thought on The Elmgrove Centre website,no_quick_contact,followup_sent,<179267920172.2232.16182418381757360286@gmail.com>,
-2026-10-22 14:28,"The Forge, Bristol",Bristol,https://theforgebristol.com,theforgebristol.com,bookings@theforgebristol.com,"Re: Website speed and leads for The Forge, Bristol",heavy_images,followup_sent,<179267929119.2232.13468903634772318454@gmail.com>,
-2026-10-22 14:29,Brown & Bye,Bristol,https://brownandbye.com,brownandbye.com,enquiry@brownandbye.com,Re: Brown & Bye: Website speed and lead capture,heavy_images,followup_sent,<179267939689.2232.10445330610583298115@gmail.com>,
-2026-10-22 20:15,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,,no_viewport,replied,,
-2026-10-26 15:58,The Exchange,Glasgow,https://theexchangeglasgow.co.uk,theexchangeglasgow.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 15:58,Merchants House of Glasgow,Glasgow,https://merchantshouse.org.uk,merchantshouse.org.uk,,,mixed_content,weak,,United Kingdom
-2026-10-26 16:00,Bridge Gardens,Glasgow,https://boxhub.uk,boxhub.uk,info@boxhub.uk,Bridge Gardens website,no_quick_contact,sent,<179303042472.2421.12060573569810089995@gmail.com>,United Kingdom
-2026-10-26 16:01,The Collector’s Hall,Glasgow,https://thecollectorshall.co.uk,thecollectorshall.co.uk,,,,no_issue,,United Kingdom
-2026-10-26 16:01,Pollokshields Burgh Hall,Glasgow,https://pollokshieldsburghhall.com,pollokshieldsburghhall.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:01,Trades Hall Of Glasgow,Glasgow,https://tradeshallglasgow.co.uk,tradeshallglasgow.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:01,Bella-Rose Hall,Glasgow,,gmaps:ChIJk-W8LgdHiEgReQ0mkZI-MDs,,,no_website,no_email,,United Kingdom
-2026-10-26 16:02,Arta,Glasgow,https://arta.co.uk,arta.co.uk,,,,unreachable,,United Kingdom
-2026-10-26 16:02,Citation Weddings & Events,Glasgow,https://citation-glasgow.com,citation-glasgow.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:02,City Halls & Old Fruitmarket,Glasgow,https://glasgowconcerthalls.com,glasgowconcerthalls.com,,,,no_issue,,United Kingdom
-2026-10-26 16:02,WestEnd Venue,Glasgow,https://westendvenue.co.uk,westendvenue.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:02,The Haberdashery,Glasgow,https://thehaberdasheryglasgow.com,thehaberdasheryglasgow.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:02,The Gathering at Woodhead Farm,Glasgow,https://thegatheringscotland.uk,thegatheringscotland.uk,,,no_meta_desc,weak,,United Kingdom
-2026-10-26 16:02,Civic House,Glasgow,https://agile-city.com,agile-city.com,,,,unreachable,,United Kingdom
-2026-10-26 16:02,St Andrew's in the Square,Glasgow,https://standrewsinthesquare.com,standrewsinthesquare.com,,,no_lead_capture,no_email,,United Kingdom
-2026-10-26 16:02,Scottish Wedding Club,Glasgow,https://scottishweddingclub.com,scottishweddingclub.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:02,Park Lane Loft,Glasgow,https://parklaneloft.com,parklaneloft.com,,,,unreachable,,United Kingdom
-2026-10-26 16:02,Kilmardinny House Art Centre,Glasgow,https://kilmardinnyhouse.co.uk,kilmardinnyhouse.co.uk,,,no_alt,weak,,United Kingdom
-2026-10-26 16:02,Partick Burgh Hall,Glasgow,https://glasgowlife.org.uk,glasgowlife.org.uk,,,,no_issue,,United Kingdom
-2026-10-26 16:02,River Palace,Glasgow,,gmaps:ChIJHe_nH5tGiEgRqRWCBCWjVyI,,,no_website,no_email,,United Kingdom
-2026-10-26 16:04,Bocabar-Finzels,Bristol,https://bocabar.co.uk,bocabar.co.uk,bocabarfinzels@outlook.com,Bocabar-Finzels website,heavy_images,sent,<179303068509.2421.17146871761740667418@gmail.com>,United Kingdom
-2026-10-26 16:07,Wilsons,Bristol,https://wilsonsrestaurant.co.uk,wilsonsrestaurant.co.uk,,,ssl_invalid,no_email,,United Kingdom
-2026-10-26 16:07,JP Destiny,Bristol,https://jpdestinythaicorner.com,jpdestinythaicorner.com,,,,no_issue,,United Kingdom
-2026-10-26 16:07,Primrose Café,Bristol,https://primrosecafe.co.uk,primrosecafe.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:07,Radical Roasters,Bristol,https://radicalroasters.co.uk,radicalroasters.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:07,Campbells Kitchen,Bristol,https://campbellskitchen.co.uk,campbellskitchen.co.uk,,,no_alt,weak,,United Kingdom
-2026-10-26 16:07,Taste of Napoli,Bristol,https://tasteofnapoli.co.uk,tasteofnapoli.co.uk,,,no_alt,weak,,United Kingdom
-2026-10-26 16:07,The Mughal Palace,Bristol,https://mughalpalace.co.uk,mughalpalace.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:07,Pizza Workshop,Bristol,https://pizzaworkshop.co.uk,pizzaworkshop.co.uk,,,no_alt,weak,,United Kingdom
-2026-10-26 16:07,Onezone,Bristol,https://uwe.ac.uk,uwe.ac.uk,,,,no_issue,,United Kingdom
-2026-10-26 16:07,The Key Cafe,Bristol,https://thekeybristol.com,thekeybristol.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:07,Jean's Bistro,Bristol,https://jeansbistro.co.uk,jeansbistro.co.uk,,,,no_issue,,United Kingdom
-2026-10-26 16:07,The Spiny Lobster,Bristol,https://thespinylobster.co.uk,thespinylobster.co.uk,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:07,Thali Cafe,Bristol,https://thethalicafe.co.uk,thethalicafe.co.uk,sales@thethalicafe.co.uk,Thali Cafe website,ssl_invalid,sent,<179303085545.2421.9369436369865064128@gmail.com>,United Kingdom
-2026-10-26 16:08,Cafe on the Square,Bristol,https://smci.org.uk,smci.org.uk,info@smci.org.uk,About www.smci.org.uk,ssl_invalid,sent,<179303093307.2421.18300587991739491704@gmail.com>,United Kingdom
-2026-10-26 16:10,The Saigon Kitchen,Bristol,https://thesaigonkitchen.co.uk,thesaigonkitchen.co.uk,,,heavy_images,weak,,United Kingdom
-2026-10-26 16:10,Lazy Lobster,Bristol,https://lazylobsterltd.com,lazylobsterltd.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:10,Lunita Pasteleria,Bristol,https://lunitapasteleria.com,lunitapasteleria.com,,,no_quick_contact,weak,,United Kingdom
-2026-10-26 16:10,Sam Master Grill,Bristol,https://samsmastergrill.com,samsmastergrill.com,,,,no_issue,,United Kingdom
-2026-10-26 16:10,Eléa Greek Grill,Bristol,https://eleagreekgrill.co.uk,eleagreekgrill.co.uk,,,,no_issue,,United Kingdom
-2026-10-26 16:10,Mokka,Bristol,https://mokkablc.co.uk,mokkablc.co.uk,,,short_title,weak,,United Kingdom
-2026-10-26 16:10,Ragu,Bristol,https://ragurestaurant.com,ragurestaurant.com,info@ragurestaurant.com,Ragu website,no_lead_capture,sent,<179303104348.2421.15010852880694349664@gmail.com>,United Kingdom
-2026-10-27 10:01,The Fabie Beauty Salon,Chandigarh,https://thefabie.com,thefabie.com,,,short_title,weak,,India
-2026-10-27 10:01,Avalon Unisex Salon,Chandigarh,,gmaps:ChIJ5bLEOmftDzkRfmTNogzZ6ag,,,no_website,no_email,,India
-2026-10-27 10:01,The Boho Salon,Chandigarh,https://thebohosalon.in,thebohosalon.in,,,ssl_invalid,no_email,,India
-2026-10-27 10:01,Your Home Salon,Chandigarh,https://g.co,g.co,,,no_lead_capture,no_email,,India
-2026-10-27 10:01,Femina Plus Luxe Salon,Chandigarh,https://femina.plus,femina.plus,,,heavy_images,weak,,India
-2026-10-27 10:01,WINDLE LONDON SALON AND ACADEMY,Chandigarh,,gmaps:ChIJ_1e8rpTtDzkRi8_8ORo_6yU,,,no_website,no_email,,India
-2026-10-27 10:01,Glamazone Unisex Salon,Chandigarh,,gmaps:ChIJH1dbEartDzkRRy9ehKLWp24,,,no_website,no_email,,India
-2026-10-27 10:01,Lakme Salon,Chandigarh,https://salons.lakmesalon.in,salons.lakmesalon.in,,,,no_issue,,India
-2026-10-27 10:01,The Barbe Beauty Salon - For Women,Chandigarh,https://thebarbesalon.com,thebarbesalon.com,,,no_quick_contact,weak,,India
-2026-10-27 10:01,Under The Dryer,Chandigarh,https://under-the-dryer.grexa.site,under-the-dryer.grexa.site,,,no_alt,weak,,India
-2026-10-27 10:01,Aparna beauty parlour,Chandigarh,,gmaps:ChIJ4aKtPtXtDzkRBRUKTq6tLbs,,,no_website,no_email,,India
-2026-10-27 10:01,"Priyanka Beauty Parlour, Chandigarh",Chandigarh,,gmaps:ChIJ_aI7DwHtDzkRXQji8fqrnDk,,,no_website,no_email,,India
-2026-10-27 10:01,Azzaro Unisex Salon,Chandigarh,,gmaps:ChIJVVVVVaTtDzkRWsBULIvyOQc,,,no_website,no_email,,India
-2026-10-27 10:01,REBOOT SALON,Chandigarh,https://rebootsalon.com,rebootsalon.com,,,heavy_images,weak,,India
-2026-10-27 10:01,Abid Hair Master - Unisex Salon,Chandigarh,,gmaps:ChIJb_C1g1jsDzkRbp8HhTooSzA,,,no_website,no_email,,India
-2026-10-27 10:01,Your Beauty Heaven – Ladies Beauty Parlour,Chandigarh,,gmaps:ChIJ0w-eFGntDzkRN4rxtshpgD0,,,no_website,no_email,,India
-2026-10-27 10:01,New Ellcanes,Chandigarh,https://nearbuy.com,nearbuy.com,,,,unreachable,,India
-2026-10-27 10:01,The Bella Cut - Unisex Salon,Chandigarh,,gmaps:ChIJV_9MqKDtDzkRpWMm67oIHlQ,,,no_website,no_email,,India
-2026-10-27 10:01,Affinity Salon,Chandigarh,https://affinitychandigarh.com,affinitychandigarh.com,,,,no_issue,,India
-2026-10-27 10:01,Seven Sky Salon,Chandigarh,,gmaps:ChIJx-_-ia7tDzkRBUSoucfTgEw,,,no_website,no_email,,India
-2026-10-27 10:01,Glimmer 'n Gloss - unisex Salon in sector 22 chandigarh,Chandigarh,,gmaps:ChIJw4S_92ztDzkRNzncXh8QTto,,,no_website,no_email,,India
-2026-10-27 10:01,9teen curls,Chandigarh,,gmaps:ChIJJ3El-X3tDzkRHVNkbeWrUpI,,,no_website,no_email,,India
-2026-10-27 10:01,Hair Raiserz 19,Chandigarh,,gmaps:ChIJE2T8FtrtDzkRX4ysL0NRMiQ,,,no_website,no_email,,India
-2026-10-27 10:01,Glam Zone,Chandigarh,,gmaps:ChIJg1Kyy7ftDzkRY3ms01FXHbs,,,no_website,no_email,,India
-2026-10-27 10:01,MAYA′s SALON,Chandigarh,,gmaps:ChIJw7cNcbztDzkRo6f0_dypGdo,,,no_website,no_email,,India
-2026-10-27 10:01,Monsoon Salon,Chandigarh,,gmaps:ChIJ1Xc6jN7tDzkROeoQp2H4Ytk,,,no_website,no_email,,India
-2026-10-27 10:01,Hair Buzz Family Salon,Chandigarh,,gmaps:ChIJxZ5m_8btDzkRyk0dpM0JsF0,,,no_website,no_email,,India
-2026-10-27 10:01,DMJ & Associates,Kochi,,gmaps:ChIJA5oZtXvWCUYR-1wZMyqxnfg,,,no_website,no_email,,India
-2026-10-27 10:01,Tax Centre,Kochi,,gmaps:ChIJM9N8chJtCDsRKKHaP44PmG0,,,no_website,no_email,,India
-2026-10-27 10:01,PARAMOUNT ACCOUNTING & FINANCIAL SERVICES,Kochi,,gmaps:ChIJvWSY04BtCDsRVey0dD1JaTg,,,no_website,no_email,,India
-2026-10-27 10:03,Joseph and Rajaram Chartered Accountants,"Kochi, Ernakulam",https://jnr.in,jnr.in,ho@jnr.in,About jnr.in,no_quick_contact,sent,<179309540441.2442.12529821689888271431@gmail.com>,India
-2026-10-27 10:05,A J Associates,Kochi,,gmaps:ChIJrRqYSX1tCDsRKd1Qdlvj9Xk,,,no_website,no_email,,India
-2026-10-27 10:05,K J Ajith & Associates (Chartered Accountants),"Kochi, Ernakulam",https://kjaassociates.in,kjaassociates.in,aj@kjaassociates.in,A note on K J Ajith & Associates (Chartered Accountants)'s website,slow,sent,<179309553545.2442.3110682214510578464@gmail.com>,India
-2026-10-27 10:06,"Boby,Francis&Pradeep, Chartered Accountants","Kochi, Ernakulam",https://bobyfrancisandpradeep.com,bobyfrancisandpradeep.com,kcpfca@gmail.com,"A note on Boby,Francis&Pradeep, Chartered Accountants's website",mixed_content,sent,<179309559893.2442.11569729461443638457@gmail.com>,India
-2026-10-27 10:08,J JAISON & CO CHARTERED ACCOUNTANTS (JJC)— ERNAKULAM | CA IN KOCHI | Accounting Services,"Kochi, Ernakulam",https://jjcaind.com,jjcaind.com,,,short_title,weak,,India
-2026-10-27 10:08,James & James LLP,"Kochi, Ernakulam",https://jjglobal.in,jjglobal.in,,,no_alt,weak,,India
-2026-10-27 10:08,Globesta Auditors & Accountants | Accounting Training Centre In Kochi Kerala,"Kochi, Ernakulam",https://globesta.in,globesta.in,,,heavy_images,weak,,India
-2026-10-27 10:08,Joseph Sibin & Associates Chartered Accountants,Kochi,https://cajosephsibin.com,cajosephsibin.com,,,,no_issue,,India
-2026-10-27 10:08,Abhijith Preman & Co. LLP | Kochi | Ernakulam,Ernakulam,https://apcallp.com,apcallp.com,,,,no_issue,,India
-2026-10-27 10:08,AJ Tax consultant,Kochi,,gmaps:ChIJCbLGFndtCDsReFtT5jxNyPg,,,no_website,no_email,,India
-2026-10-27 10:08,"Balakrishnan & Co, Chartered Accountants",Ernakulam,,gmaps:ChIJr43Zw8pyCDsR4mZhIZ6NkQQ,,,no_website,no_email,,India
-2026-10-27 10:08,Accovet Ltd,"Kochi, Ernakulam",https://accovet.com,accovet.com,,,stale_year,weak,,India
-2026-10-27 10:08,ROSHAN THOMAS & Co (H.O)- Company Registration CA | Audit Services | Tax Consultant | Income Tax Filing CA Ernakulam,Ernakulam,https://rtnco.in,rtnco.in,bibin.jacob@rtnco.in,About rtnco.in,no_title,sent,<179309570996.2442.5677178434099327961@gmail.com>,India
-2026-10-27 10:10,Abraham & Antony CA Firms in Kochi,Kakkanad,https://abrahamandantony.com,abrahamandantony.com,,,heavy_page,weak,,India
-2026-10-27 10:10,JRS & Co.,Ernakulam,https://jrsca.com,jrsca.com,,,no_meta_desc,weak,,India
-2026-10-27 10:10,RAS Guru Associates - GST -Income Tax- Accounting consultant,"Kochi, Ernakulam",,gmaps:ChIJx_UocABzCDsRTiadVhF920U,,,no_website,no_email,,India
-2026-10-27 10:10,"MACKS & Associates, Chartered Accountants",Ernakulam,,gmaps:ChIJpcm1I78NCDsRoy-V_kaajD4,,,no_website,no_email,,India
-2026-10-27 10:10,Genway Realty,Coimbatore,,gmaps:ChIJD7y52NBZqDsR_VsEu3qkpxo,,,no_website,no_email,,India
-2026-10-27 10:10,Lands and Lands,Coimbatore,https://landsandlands.com,landsandlands.com,,,,no_issue,,India
-2026-10-27 10:10,Sri Balaji Real Estate,Coimbatore,https://sbrrealestate.com,sbrrealestate.com,,,heavy_images,weak,,India
-2026-10-27 10:10,VIP REAL ESTATE,Coimbatore,https://viprealestate.co.in,viprealestate.co.in,,,,no_issue,,India
-2026-10-27 10:10,Hanu Reddy Realty India Private Limited,"Ramanathapuram, Coimbatore",https://hanureddyrealty.com,hanureddyrealty.com,,,,unreachable,,India
-2026-10-27 10:10,Rock Realty,Coimbatore,https://rockrealty.co.in,rockrealty.co.in,,,heavy_images,weak,,India
-2026-10-27 10:10,JNS REAL ESTATE,Coimbatore,https://jnsrealestate.in,jnsrealestate.in,,,no_meta_desc,weak,,India
-2026-10-27 10:10,KSR REALTY COIMBATORE,Coimbatore,https://ksrrealty.in,ksrrealty.in,,,,no_issue,,India
-2026-10-27 10:10,THRONE DEVELOPER LLP,Coimbatore,,gmaps:ChIJYS4xeLJZqDsRjvhbWpajfzo,,,no_website,no_email,,India
-2026-10-27 10:10,Annai Realty,Coimbatore,https://annairealty.com,annairealty.com,annairealtycbe@gmail.com,About annairealty.com,mixed_content,sent,<179309584446.2442.10052562534420468008@gmail.com>,India
-2026-10-27 20:50,Thali Cafe,Bristol,https://thethalicafe.co.uk,thethalicafe.co.uk,sales@thethalicafe.co.uk,,ssl_invalid,bounced,,United Kingdom
+date,business,city,website,domain,email,subject,main_issue,status,message_id,country,category,score
+2026-10-15 11:22,Neuberg Diagnostics,Chennai,https://neubergdiagnostics.com,neubergdiagnostics.com,,,,unreachable,,,,
+2026-10-15 11:23,Scans World,Chennai,https://scansworld.in,scansworld.in,scansworld@gmail.com,Scans World Website for Mobile Visitors,no_viewport,sent,<179206338015.2128.16228798850524042608@gmail.com>,,,
+2026-10-15 11:24,Aarthi Scans & Labs,Chennai,https://aarthiscan.com,aarthiscan.com,,,,unreachable,,,,
+2026-10-15 11:25,Lalchand Leeladevi Munoth Jain Medical Care,Chennai,https://llmjmc.org,llmjmc.org,support@llmjmc.org,Website improvements for Lalchand Leeladevi Munoth Jain Medical Care,no_lead_capture,sent,<179206350870.2128.8942723917938585593@gmail.com>,,,
+2026-10-15 11:29,"Sunetra Eye, Laser and Dental Care Centre",Ghaziabad,https://sunetra.co.in,sunetra.co.in,,,,no_issue,,,,
+2026-10-15 11:30,Yashoda Super speciality Hospital,Ghaziabad,https://yashodahospital.org,yashodahospital.org,admin.yhk@yashodahospital.org,Yashoda Hospital website speed and mobile experience,heavy_images,sent,<179206380043.2128.6951098590261730567@gmail.com>,,,
+2026-10-15 11:31,HOD Ghaziabad - House Of Diagnostics,Ghaziabad,https://hod.care,hod.care,,,,no_issue,,,,
+2026-10-15 11:31,Centre for Sight,Ghaziabad,https://centreforsight.com,centreforsight.com,,,,no_issue,,,,
+2026-10-15 11:31,Eye7 Chaudhary Eye Centre,Ghaziabad,https://eye7.in,eye7.in,info@eye7.in,Eye7 Chaudhary Eye Centre website performance,slow,sent,<179206389671.2128.10080693128919490557@gmail.com>,,,
+2026-10-15 11:32,Max Superspeciality Hospital,Ghaziabad,https://jointsurgerydelhi.com,jointsurgerydelhi.com,,,ssl_invalid,no_email,,,,
+2026-10-15 11:33,Rheuma Clinic,Ghaziabad,https://drsauvikdasgupta.in,drsauvikdasgupta.in,sauvikdasgupta@gmail.com,Rheuma Clinic: Homepage Heading & SEO,no_h1,sent,<179206398571.2128.7632999191543011011@gmail.com>,,,
+2026-10-15 11:34,"Sharp Sight Centre, Indirapuram",Ghaziabad,https://sharpsight.in,sharpsight.in,info@sharpsight.in,Sharp Sight Centre website speed,slow,sent,<179206408763.2128.9305813143519358419@gmail.com>,,,
+2026-10-16 07:05,Cafe Appetito - Alembic,Vadodara,https://cafeappetito.in,cafeappetito.in,,,no_lead_capture,no_email,,,,
+2026-10-16 08:13,Lalchand Leeladevi Munoth Jain Medical Care,Chennai,https://llmjmc.org,llmjmc.org,support@llmjmc.org,,no_lead_capture,bounced,,,,
+2026-10-16 08:13,Bhopal Guest House & Restaurant,Bhopal,,gmaps:ChIJG42S955DfDkR1FnxqCVgY7Y,,,no_website,no_email,,,,
+2026-10-16 08:13,Hotel Grand Stay,Bhopal,https://hotelgrandstaybhopal.cotravels.in,hotelgrandstaybhopal.cotravels.in,,,,no_issue,,,,
+2026-10-16 08:13,Bhopal Guest House and Restaurant,Bhopal,,gmaps:ChIJfW_l6uFDfDkRZy2ud-UogiQ,,,no_website,no_email,,,,
+2026-10-16 08:13,Aradhya Guest House,Bhopal,https://aradhyaguesthouse.com,aradhyaguesthouse.com,,,stale_year,weak,,,,
+2026-10-16 08:13,Grand Hotel,Bhopal,,gmaps:ChIJD_bFEgBpfDkRvg8kG38CbfU,,,no_website,no_email,,,,
+2026-10-16 08:13,DEEP GUEST HOUSE दीप गेस्ट हाउस,Bhopal,,gmaps:ChIJb1W0ozlDfDkRG2iWCKKz1Uw,,,no_website,no_email,,,,
+2026-10-16 08:13,Antra's Guest House,Bhopal,,gmaps:ChIJg6cTxMZDfDkRWFvVfaGb9AQ,,,no_website,no_email,,,,
+2026-10-16 08:13,Kanha Guest House,Bhopal,,gmaps:ChIJI6QGxL1CfDkRDUkKK60VqMU,,,no_website,no_email,,,,
+2026-10-16 08:13,Hotel Indigo Rooms,Bhopal,,gmaps:ChIJ2cKw6VRpfDkRXs8kTIyGtJQ,,,no_website,no_email,,,,
+2026-10-16 08:13,Hotel Chinar,Bhopal,,gmaps:ChIJIzCnOiRofDkREtRZXSu6944,,,no_website,no_email,,,,
+2026-10-16 08:13,Kanha Gold,Bhopal,,gmaps:ChIJb6Xy6CJofDkRi0j7eZdXKy8,,,no_website,no_email,,,,
+2026-10-16 08:13,Hotel Pathik Bhopal,Bhopal,,gmaps:ChIJM_NXGyVofDkRegr6Aj39Nm8,,,no_website,no_email,,,,
+2026-10-16 08:13,The Rest house,Bhopal,,gmaps:ChIJc1UE5SVBfDkRbLM1cyzSmA0,,,no_website,no_email,,,,
+2026-10-16 08:13,Akram Hostel Guest house home stay,"Neelbad, Bhopal",,gmaps:ChIJw12zbXNdfDkRm-BRcYAq__M,,,no_website,no_email,,,,
+2026-10-16 08:13,Hello Kanpur Tour & Travels / Tempo Traveller In Kanpur,Kanpur,https://hellokanpurtravels.in,hellokanpurtravels.in,,,no_h1,weak,,,,
+2026-10-16 08:13,Ghoomne Chale Tour and Travels,Kanpur,,gmaps:ChIJ9-AAJxmo7kIRVIxvjunvDz4,,,no_website,no_email,,,,
+2026-10-16 08:13,Welcome Kanpur Tour & Travels / Tempo Traveller In Kanpur,Kanpur,,gmaps:ChIJkalWoP5HnDkRZv8-9De5eyU,,,no_website,no_email,,,,
+2026-10-16 08:13,Khatu Shyam tour and travels,Kanpur,,gmaps:ChIJU25nHu1HnDkRFNt9_uBZ4Xw,,,no_website,no_email,,,,
+2026-10-16 08:13,Flight Risen Travels: International Travel Agency in Kanpur,Kanpur,https://flightrisentravels.com,flightrisentravels.com,,,heavy_images,weak,,,,
+2026-10-16 08:13,Kanpur Tour & Travels,Kanpur,https://kanpurtourandtravels.in,kanpurtourandtravels.in,,,no_quick_contact,weak,,,,
+2026-10-16 08:13,Gomti Tour & Travels,Kanpur,,gmaps:ChIJ_S1R7GlHnDkRXM1lU117nEk,,,no_website,no_email,,,,
+2026-10-16 08:13,Tour My India Travels - Tour And Travel Agency In Kanpur,Kanpur,https://tourmyindiatravels.in,tourmyindiatravels.in,,,no_quick_contact,weak,,,,
+2026-10-16 08:13,Esha Travels - Travel Agency in Kanpur,Kanpur,https://eshatravels.in,eshatravels.in,eshatravels1@gmail.com,Your Esha Travels website: security fix,no_https,sent,<179213841528.2131.10492118192521910612@gmail.com>,,,
+2026-10-16 08:14,AR Travels,Kanpur,,gmaps:ChIJveJqLA1HnDkR240wERHMiNY,,,no_website,no_email,,,,
+2026-10-16 08:14,Kanpur tour travels barra 8,Kanpur,https://sachinsachan012.wixsite.com,sachinsachan012.wixsite.com,,,,unreachable,,,,
+2026-10-16 08:14,STAR TOURS & TRAVELS,Kanpur,,gmaps:ChIJjfKjoVZHnDkROjtIxV1gTDg,,,no_website,no_email,,,,
+2026-10-16 08:14,Bhraman Bharat Tours,Kanpur,,gmaps:ChIJM7nBZyJHnDkRrI8lciJvYFI,,,no_website,no_email,,,,
+2026-10-16 08:15,Ideal Travel Visa & Buisness Consultant,Kanpur,https://idealtravel.world,idealtravel.world,,,heavy_images,weak,,,,
+2026-10-16 08:15,COMFORT TRAVELS,Kanpur,https://comforttravelsonline.com,comforttravelsonline.com,,,,no_issue,,,,
+2026-10-16 08:15,Al-jazeera tours & Travels services,Kanpur,https://aljazeeratravels.in,aljazeeratravels.in,,,no_quick_contact,weak,,,,
+2026-10-16 08:15,Al Baqar Tours & Travels,Kanpur,,gmaps:ChIJFZFuKRtHnDkRz5sWF9VrGZw,,,no_website,no_email,,,,
+2026-10-16 08:15,Nikhil Travels,Kanpur,,gmaps:ChIJnwFPRTpHnDkRC0x7_OTvi6A,,,no_website,no_email,,,,
+2026-10-16 08:15,Khan Travels,Kanpur,https://khantravels.co.in,khantravels.co.in,,,no_viewport,no_email,,,,
+2026-10-16 08:15,Rudra Tours And Travels Kanpur,Kanpur,https://toursbyrudra.com,toursbyrudra.com,,,,no_issue,,,,
+2026-10-16 08:15,Pahuja Travels,Kanpur,,gmaps:ChIJO-yVa-FHnDkRg1Gtp4lxm4Y,,,no_website,no_email,,,,
+2026-10-16 08:15,Kanpur Tour And Travels,Kanpur,https://kanpurtourandtravels.com,kanpurtourandtravels.com,,,,unreachable,,,,
+2026-10-16 08:15,R & A ENTERPRISES (TOUR & TRAVELS),Kanpur,https://shriraenterprises.com,shriraenterprises.com,,,stale_year,weak,,,,
+2026-10-16 08:15,Al Uqba Tours & Travels,Kanpur,,gmaps:ChIJLXKoTZw4nDkR_pvbnqCXW_I,,,no_website,no_email,,,,
+2026-10-16 08:15,Stockholm International School Primary School campus,Stockholm,https://stockholmis.se,stockholmis.se,,,no_meta_desc,weak,,,,
+2026-10-16 08:15,Vasa International School of Stockholm,Stockholm,https://vasainternationalschoolofstockholm.com,vasainternationalschoolofstockholm.com,,,no_quick_contact,weak,,,,
+2026-10-16 08:15,The Tanto School AB,Stockholm,https://tantoschool.se,tantoschool.se,,,no_quick_contact,weak,,,,
+2026-10-16 08:15,International School of Kungsholmen,Stockholm,https://internationalschoolofkungsholmen.com,internationalschoolofkungsholmen.com,,,no_quick_contact,weak,,,,
+2026-10-16 08:15,ProCivitas Private School,Stockholm,https://procivitas.se,procivitas.se,,,heavy_images,no_email,,,,
+2026-10-16 08:15,Gilda School AB,Stockholm,https://gildasalong.se,gildasalong.se,,,short_title,weak,,,,
+2026-10-16 08:15,International IT College of Sweden,Stockholm,https://arenaacademy.se,arenaacademy.se,,,ssl_invalid,no_email,,,,
+2026-10-16 08:16,Carlssons skola,Stockholm,https://carlssonsskola.se,carlssonsskola.se,info@carlssonsskola.se,Carlssons skola website observation,no_lead_capture,sent,<179213857316.2131.8317942851778147719@gmail.com>,,,
+2026-10-16 08:17,Nordic International school Essingen,Stockholm,https://nordicinternational.se,nordicinternational.se,,,no_alt,weak,,,,
+2026-10-16 08:17,Berlitz Stockholm,Stockholm,https://berlitz.se,berlitz.se,,,no_alt,weak,,,,
+2026-10-16 08:17,International School of the Stockholm Region,Stockholm,https://internationalschoolofthestockholmregion.stockholm,internationalschoolofthestockholmregion.stockholm,,,no_quick_contact,weak,,,,
+2026-10-16 08:17,SchoolParrot AB,Stockholm,https://schoolparrot.com,schoolparrot.com,,,no_lead_capture,no_email,,,,
+2026-10-16 08:17,Skandinaviska Musikskolan,Stockholm,https://skandinaviskamusikskolan.se,skandinaviskamusikskolan.se,,,no_lead_capture,no_email,,,,
+2026-10-16 08:17,Enskilda Gymnasiet,Stockholm,https://enskildagymnasiet.se,enskildagymnasiet.se,info@enskildagymnasiet.se,Enskilda Gymnasiet website contact issues,no_lead_capture,sent,<179213863702.2131.17178882770417945206@gmail.com>,,,
+2026-10-16 08:18,Stockholm International Academy Hägersten,Hägersten,,gmaps:ChIJyUTi9Ah3X0YR9k7P253uuys,,,no_website,no_email,,,,
+2026-10-16 08:18,Gamla Stans Simskola,Stockholm,https://gamlastanssimskola.se,gamlastanssimskola.se,,,mixed_content,weak,,,,
+2026-10-16 08:18,Make Up Institute Stockholm,Stockholm,https://makeupinstitute.com,makeupinstitute.com,,,no_quick_contact,weak,,,,
+2026-10-16 08:18,Rockskolan Stockholm Hötorget,Stockholm,https://rockskolan.com,rockskolan.com,,,no_title,weak,,,,
+2026-10-16 08:18,Engelska Skolan Novia,Stockholm,,gmaps:ChIJmfNye8B3X0YRuC27k0Bqt5k,,,no_website,no_email,,,,
+2026-10-16 08:18,Settle Into Stockholm,Stockholm,https://settleintostockholm.com,settleintostockholm.com,,,no_quick_contact,weak,,,,
+2026-10-16 08:19,Swedish-Finnish School in Stockholm,Stockholm,https://sverigefinskaskolan.eu,sverigefinskaskolan.eu,info@sverigefinskaskolan.eu,Website observation for Swedish-Finnish School,no_quick_contact,sent,<179213874382.2131.7194380609750485994@gmail.com>,,,
+2026-10-16 08:20,MINT DENTAL SOLUTIONS,Guwahati,,gmaps:ChIJIQTMel1bWjcRL_iDJDkbVA4,,,no_website,no_email,,,,
+2026-10-16 08:20,City Dental Clinic,Guwahati,,gmaps:ChIJ19Z9GcRbWjcRDrqtMFk23V4,,,no_website,no_email,,,,
+2026-10-16 08:20,DENTAL SENSE,Guwahati,,gmaps:ChIJ6yLrDk9bWjcRvLUWBFhLe-E,,,no_website,no_email,,,,
+2026-10-16 08:20,Real Smile Dental Center,Guwahati,https://realsmiledentalcenter.com,realsmiledentalcenter.com,,,short_title,weak,,,,
+2026-10-16 08:20,DentoShine Dental Clinic,Guwahati,https://dentoshineaesthethic.in,dentoshineaesthethic.in,,,no_meta_desc,weak,,,,
+2026-10-16 08:20,Maruti Dental Clinic,Guwahati,,gmaps:ChIJoab7wOlbWjcR8uFRiBNkVb0,,,no_website,no_email,,,,
+2026-10-16 08:20,FAMILY DENTAL CLINIC,Guwahati,https://dentistguwahati.in,dentistguwahati.in,,,,no_issue,,,,
+2026-10-16 08:20,"Smartcity Dental Clinic, Lal Ganesh, Guwahati",Guwahati,https://smartcitydental.in,smartcitydental.in,,,stale_year,weak,,,,
+2026-10-16 08:20,Dr.Gitarthy's Apex Dental Clinic: Hengerabari,Guwahati,https://apexdentalghy.com,apexdentalghy.com,,,no_alt,weak,,,,
+2026-10-16 08:20,MEDINOVA - MULTISPECIALITY DENTAL CLINIC,Guwahati,https://medinovadentalghy.in,medinovadentalghy.in,,,no_meta_desc,weak,,,,
+2026-10-16 08:20,TEETH CARE MULTISPECIALITY DENTAL CLINIC,Guwahati,,gmaps:ChIJ57CB2SpbWjcRMyIEppSp1t8,,,no_website,no_email,,,,
+2026-10-16 08:20,Radiant Dental Care,Guwahati,,gmaps:ChIJwW0H0ktZWjcRLa3_ZNLXibk,,,no_website,no_email,,,,
+2026-10-16 08:20,Dr Rounak Jain’s dental centre braces and orthodontics.,Guwahati,,gmaps:ChIJi1hPO1tbWjcRv6ptQojUE1g,,,no_website,no_email,,,,
+2026-10-16 08:20,Smile Care Dental Clinic,Guwahati,,gmaps:ChIJ8yIIWi1bWjcRmFNqhaglNPk,,,no_website,no_email,,,,
+2026-10-16 08:20,Dr. Udeshna's Multispeciality Dental Care,Guwahati,https://drudeshnamultispecialitydental.com,drudeshnamultispecialitydental.com,,,no_alt,weak,,,,
+2026-10-16 08:21,Smile Dental care,Guwahati,https://smiledentalcare.in,smiledentalcare.in,,,no_lead_capture,no_email,,,,
+2026-10-16 08:21,Pearl 32 Dental Spa & Cosmetic Clinic,Guwahati,https://oxyfind.com,oxyfind.com,,,no_meta_desc,weak,,,,
+2026-10-16 08:21,Guwahati Dental Clinic,Guwahati,,gmaps:ChIJCRiXhwlZWjcR3_vvIVnjKIk,,,no_website,no_email,,,,
+2026-10-16 08:21,Truesmile Oral and Dental Clinic (Branch - 2) - Best Dental Clinic | Dental Clinic Near me in Guwahati,Guwahati,,gmaps:ChIJpQy5S5FbWjcRfb2FXQ0jeOc,,,no_website,no_email,,,,
+2026-10-16 08:21,DENTAL CENTRAL - Multispeciality Aesthetic & Orthodontic Clinic,Guwahati,https://dentalcentral.in,dentalcentral.in,,,,no_issue,,,,
+2026-10-16 13:48,Pata Pata African Resturant,Johannesburg,,gmaps:ChIJJYivd4YOlR4Rzk1ohAun13w,,,no_website,no_email,,,,
+2026-10-16 13:48,Flames,Johannesburg,https://fourseasons.com,fourseasons.com,,,,unreachable,,,,
+2026-10-16 13:48,Yeoville Dinner Club,Johannesburg,,gmaps:ChIJ7Xegcs0NlR4RWM_j_h8x_P0,,,no_website,no_email,,,,
+2026-10-16 13:48,Love Revo Maboneng,Johannesburg,https://getbestweb.site,getbestweb.site,,,no_quick_contact,weak,,,,
+2026-10-16 13:48,Thorn Restaurant,Johannesburg,,gmaps:ChIJhegIQSQPlR4Rc0SSa5YyNOo,,,no_website,no_email,,,,
+2026-10-16 13:48,Exotically Divine ital,Johannesburg,,gmaps:ChIJNStHqx4PlR4Rh4CHIpSYgnE,,,no_website,no_email,,,,
+2026-10-16 13:48,94 Main Eatery,Johannesburg,,gmaps:ChIJicc-4RsPlR4R5k7Tdk6TobU,,,no_website,no_email,,,,
+2026-10-16 13:48,The Royal Park Restaurant,Johannesburg,,gmaps:ChIJe1sb2voNlR4RpPwXJ6TY7zM,,,no_website,no_email,,,,
+2026-10-16 13:48,Nova bistro restaurant,Johannesburg,https://novabistro.co.za,novabistro.co.za,,,no_quick_contact,weak,,,,
+2026-10-16 13:49,YML Eatery,Johannesburg South,https://ymleatery.co.za,ymleatery.co.za,,,no_viewport,no_email,,,,
+2026-10-16 13:49,Confluence Restaurant,Johannesburg,https://confluence.joburg,confluence.joburg,eat@confluence.joburg,Confluence.joburg mobile experience,heavy_images,sent,<179215856079.2026.16278339747468161595@gmail.com>,,,
+2026-10-16 13:50,Taste kitchen,Johannesburg,,gmaps:ChIJN0Fj9V4PlR4Rm9TSMONyLjw,,,no_website,no_email,,,,
+2026-10-16 13:50,Abandoned Kitchen,Johannesburg,,gmaps:ChIJAUlu1QUNlR4ReT-3ImBdRk0,,,no_website,no_email,,,,
+2026-10-16 13:50,Little Addis Cafe,Johannesburg,,gmaps:ChIJ_eSr0IUOlR4RceJQZhof2ZU,,,no_website,no_email,,,,
+2026-10-16 13:50,Tau Eats,Johannesburg,,gmaps:ChIJnTyyENQNlR4Raly365JTj2I,,,no_website,no_email,,,,
+2026-10-16 13:50,Kraal Restaurant,Johannesburg South,https://thabahotel.co.za,thabahotel.co.za,,,,no_issue,,,,
+2026-10-16 13:50,Jojo Rooftop Lounge,Johannesburg,https://jojorooftoplounge.co.za,jojorooftoplounge.co.za,,,,no_issue,,,,
+2026-10-16 13:50,Soul food hive,Johannesburg,,gmaps:ChIJYx7h6H4PlR4RyONMOqldcnQ,,,no_website,no_email,,,,
+2026-10-16 13:50,The Mark's Kitchen_Hillbrow,Johannesburg,,gmaps:ChIJdbSkNzsMlR4Rz8PbCJhCpgo,,,no_website,no_email,,,,
+2026-10-16 13:50,Bonne Appetit Restaurant & Chisa Nyama,Johannesburg,,gmaps:ChIJWRidTZwOlR4Rz9_fzh88QQQ,,,no_website,no_email,,,,
+2026-10-16 13:50,The Rooftop Restaurant,Johannesburg,https://rooftopcafe.co.za,rooftopcafe.co.za,,,no_meta_desc,weak,,,,
+2026-10-16 13:50,The Pot Luck Club Johannesburg,Johannesburg,https://thepotluckclubjhb.co.za,thepotluckclubjhb.co.za,,,no_quick_contact,weak,,,,
+2026-10-16 13:50,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,The Radnor Rooms website: mobile experience,no_viewport,sent,<179215865749.2026.17799714532364880697@gmail.com>,,,
+2026-10-16 13:52,Park Street Events & Wedding Venue,Bristol,https://17parkstreet.co.uk,17parkstreet.co.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:52,The Elmgrove Centre,Bristol,https://theelmgrovecentre.co.uk,theelmgrovecentre.co.uk,info@theelmgrovecentre.co.uk,Quick thought on The Elmgrove Centre website,no_quick_contact,sent,<179215875072.2026.2803785944581602974@gmail.com>,,,
+2026-10-16 13:53,"The Forge, Bristol",Bristol,https://theforgebristol.com,theforgebristol.com,bookings@theforgebristol.com,"Website speed and leads for The Forge, Bristol",heavy_images,sent,<179215881956.2026.12466795381792690557@gmail.com>,,,
+2026-10-16 13:54,Merchants' Hall,Bristol,https://merchants-hall.com,merchants-hall.com,,,no_quick_contact,weak,,,,
+2026-10-16 13:54,The Bristol Pavilion,Bristol,https://thebristolpavilion.co.uk,thebristolpavilion.co.uk,,,no_quick_contact,no_email,,,,
+2026-10-16 13:56,Brown & Bye,Bristol,https://brownandbye.com,brownandbye.com,enquiry@brownandbye.com,Brown & Bye: Website speed and lead capture,heavy_images,sent,<179215898398.2026.8914704778517900827@gmail.com>,,,
+2026-10-16 13:57,Paintworks Event Space,Bristol,https://paintworksevents.co.uk,paintworksevents.co.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,Mansion House Bristol,Avon,https://mansionhousebristol.co.uk,mansionhousebristol.co.uk,,,no_viewport,no_email,,,,
+2026-10-16 13:57,University Literary Club,Bristol,https://unilit.co.uk,unilit.co.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,The Orangery,Bristol,https://bristol.ac.uk,bristol.ac.uk,,,,no_issue,,,,
+2026-10-16 13:57,The Square Club,Bristol,https://thesquareclub.com,thesquareclub.com,,,,no_issue,,,,
+2026-10-16 13:57,Frenchay Village Hall,Bristol,,gmaps:ChIJWdAvmhCQcUgRwfa98g4t6yw,,,no_website,no_email,,,,
+2026-10-16 13:57,St Michaels Parish Hall,Bristol,https://stmichaelsparishhall.co.uk,stmichaelsparishhall.co.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,Anson Rooms,Bristol,https://bristolsu.org.uk,bristolsu.org.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,Leigh Court,Bristol,https://leighcourt.co.uk,leighcourt.co.uk,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,Province Of Bristol Masonic Hall,Bristol,https://provinceofbristol.org.uk,provinceofbristol.org.uk,,,ssl_invalid,no_email,,,,
+2026-10-16 13:57,The Newman Hall,Bristol,https://newmanhall-bristol.co.uk,newmanhall-bristol.co.uk,,,,unreachable,,,,
+2026-10-16 13:57,Henbury Village Hall,Bristol,https://henburyvillagehall.org,henburyvillagehall.org,,,no_quick_contact,weak,,,,
+2026-10-16 13:57,Centurys Club,Bristol,https://centurysclub.co.uk,centurysclub.co.uk,,,no_h1,weak,,,,
+2026-10-16 13:57,Ven you,Bristol,,gmaps:ChIJP-IFz4WNcUgRrHLpLq0xqjI,,,no_website,no_email,,,,
+2026-10-16 19:38,Confluence Restaurant,Johannesburg,https://confluence.joburg,confluence.joburg,eat@confluence.joburg,,heavy_images,bounced,,,,
+2026-10-19 16:18,Scans World,Chennai,https://scansworld.in,scansworld.in,scansworld@gmail.com,Re: Scans World Website for Mobile Visitors,no_viewport,followup_sent,<179242668318.2160.8273644495556905833@gmail.com>,,,
+2026-10-19 16:20,Yashoda Super speciality Hospital,Ghaziabad,https://yashodahospital.org,yashodahospital.org,admin.yhk@yashodahospital.org,Re: Yashoda Hospital website speed and mobile experience,heavy_images,followup_sent,<179242682194.2160.55339699593786107@gmail.com>,,,
+2026-10-19 16:21,Eye7 Chaudhary Eye Centre,Ghaziabad,https://eye7.in,eye7.in,info@eye7.in,Re: Eye7 Chaudhary Eye Centre website performance,slow,followup_sent,<179242688938.2160.1533044718308584680@gmail.com>,,,
+2026-10-20 14:11,Rheuma Clinic,Ghaziabad,https://drsauvikdasgupta.in,drsauvikdasgupta.in,sauvikdasgupta@gmail.com,Re: Rheuma Clinic: Homepage Heading & SEO,no_h1,followup_sent,<179250547789.2119.18318699351255581902@gmail.com>,,,
+2026-10-20 14:12,"Sharp Sight Centre, Indirapuram",Ghaziabad,https://sharpsight.in,sharpsight.in,info@sharpsight.in,Re: Sharp Sight Centre website speed,slow,followup_sent,<179250556103.2119.15127132988892608038@gmail.com>,,,
+2026-10-20 14:15,Esha Travels - Travel Agency in Kanpur,Kanpur,https://eshatravels.in,eshatravels.in,eshatravels1@gmail.com,Re: Your Esha Travels website: security fix,no_https,followup_sent,<179250570114.2119.9482488278375435896@gmail.com>,,,
+2026-10-21 14:24,Carlssons skola,Stockholm,https://carlssonsskola.se,carlssonsskola.se,info@carlssonsskola.se,Re: Carlssons skola website observation,no_lead_capture,followup_sent,<179259263980.2210.15608151632434613023@gmail.com>,,,
+2026-10-21 14:25,Enskilda Gymnasiet,Stockholm,https://enskildagymnasiet.se,enskildagymnasiet.se,info@enskildagymnasiet.se,Re: Enskilda Gymnasiet website contact issues,no_lead_capture,followup_sent,<179259273018.2210.2040141865535292143@gmail.com>,,,
+2026-10-21 14:27,Swedish-Finnish School in Stockholm,Stockholm,https://sverigefinskaskolan.eu,sverigefinskaskolan.eu,info@sverigefinskaskolan.eu,Re: Website observation for Swedish-Finnish School,no_quick_contact,followup_sent,<179259282848.2210.6951463026087591358@gmail.com>,,,
+2026-10-22 14:24,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,Re: The Radnor Rooms website: mobile experience,no_viewport,followup_sent,<179267909216.2232.13410156234875547330@gmail.com>,,,
+2026-10-22 14:26,The Elmgrove Centre,Bristol,https://theelmgrovecentre.co.uk,theelmgrovecentre.co.uk,info@theelmgrovecentre.co.uk,Re: Quick thought on The Elmgrove Centre website,no_quick_contact,followup_sent,<179267920172.2232.16182418381757360286@gmail.com>,,,
+2026-10-22 14:28,"The Forge, Bristol",Bristol,https://theforgebristol.com,theforgebristol.com,bookings@theforgebristol.com,"Re: Website speed and leads for The Forge, Bristol",heavy_images,followup_sent,<179267929119.2232.13468903634772318454@gmail.com>,,,
+2026-10-22 14:29,Brown & Bye,Bristol,https://brownandbye.com,brownandbye.com,enquiry@brownandbye.com,Re: Brown & Bye: Website speed and lead capture,heavy_images,followup_sent,<179267939689.2232.10445330610583298115@gmail.com>,,,
+2026-10-22 20:15,The Radnor Rooms,Bristol,https://theradnorrooms.co.uk,theradnorrooms.co.uk,contact@theradnorrooms.co.uk,,no_viewport,replied,,,,
+2026-10-26 15:58,The Exchange,Glasgow,https://theexchangeglasgow.co.uk,theexchangeglasgow.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 15:58,Merchants House of Glasgow,Glasgow,https://merchantshouse.org.uk,merchantshouse.org.uk,,,mixed_content,weak,,United Kingdom,,
+2026-10-26 16:00,Bridge Gardens,Glasgow,https://boxhub.uk,boxhub.uk,info@boxhub.uk,Bridge Gardens website,no_quick_contact,sent,<179303042472.2421.12060573569810089995@gmail.com>,United Kingdom,,
+2026-10-26 16:01,The Collector’s Hall,Glasgow,https://thecollectorshall.co.uk,thecollectorshall.co.uk,,,,no_issue,,United Kingdom,,
+2026-10-26 16:01,Pollokshields Burgh Hall,Glasgow,https://pollokshieldsburghhall.com,pollokshieldsburghhall.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:01,Trades Hall Of Glasgow,Glasgow,https://tradeshallglasgow.co.uk,tradeshallglasgow.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:01,Bella-Rose Hall,Glasgow,,gmaps:ChIJk-W8LgdHiEgReQ0mkZI-MDs,,,no_website,no_email,,United Kingdom,,
+2026-10-26 16:02,Arta,Glasgow,https://arta.co.uk,arta.co.uk,,,,unreachable,,United Kingdom,,
+2026-10-26 16:02,Citation Weddings & Events,Glasgow,https://citation-glasgow.com,citation-glasgow.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:02,City Halls & Old Fruitmarket,Glasgow,https://glasgowconcerthalls.com,glasgowconcerthalls.com,,,,no_issue,,United Kingdom,,
+2026-10-26 16:02,WestEnd Venue,Glasgow,https://westendvenue.co.uk,westendvenue.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:02,The Haberdashery,Glasgow,https://thehaberdasheryglasgow.com,thehaberdasheryglasgow.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:02,The Gathering at Woodhead Farm,Glasgow,https://thegatheringscotland.uk,thegatheringscotland.uk,,,no_meta_desc,weak,,United Kingdom,,
+2026-10-26 16:02,Civic House,Glasgow,https://agile-city.com,agile-city.com,,,,unreachable,,United Kingdom,,
+2026-10-26 16:02,St Andrew's in the Square,Glasgow,https://standrewsinthesquare.com,standrewsinthesquare.com,,,no_lead_capture,no_email,,United Kingdom,,
+2026-10-26 16:02,Scottish Wedding Club,Glasgow,https://scottishweddingclub.com,scottishweddingclub.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:02,Park Lane Loft,Glasgow,https://parklaneloft.com,parklaneloft.com,,,,unreachable,,United Kingdom,,
+2026-10-26 16:02,Kilmardinny House Art Centre,Glasgow,https://kilmardinnyhouse.co.uk,kilmardinnyhouse.co.uk,,,no_alt,weak,,United Kingdom,,
+2026-10-26 16:02,Partick Burgh Hall,Glasgow,https://glasgowlife.org.uk,glasgowlife.org.uk,,,,no_issue,,United Kingdom,,
+2026-10-26 16:02,River Palace,Glasgow,,gmaps:ChIJHe_nH5tGiEgRqRWCBCWjVyI,,,no_website,no_email,,United Kingdom,,
+2026-10-26 16:04,Bocabar-Finzels,Bristol,https://bocabar.co.uk,bocabar.co.uk,bocabarfinzels@outlook.com,Bocabar-Finzels website,heavy_images,sent,<179303068509.2421.17146871761740667418@gmail.com>,United Kingdom,,
+2026-10-26 16:07,Wilsons,Bristol,https://wilsonsrestaurant.co.uk,wilsonsrestaurant.co.uk,,,ssl_invalid,no_email,,United Kingdom,,
+2026-10-26 16:07,JP Destiny,Bristol,https://jpdestinythaicorner.com,jpdestinythaicorner.com,,,,no_issue,,United Kingdom,,
+2026-10-26 16:07,Primrose Café,Bristol,https://primrosecafe.co.uk,primrosecafe.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:07,Radical Roasters,Bristol,https://radicalroasters.co.uk,radicalroasters.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:07,Campbells Kitchen,Bristol,https://campbellskitchen.co.uk,campbellskitchen.co.uk,,,no_alt,weak,,United Kingdom,,
+2026-10-26 16:07,Taste of Napoli,Bristol,https://tasteofnapoli.co.uk,tasteofnapoli.co.uk,,,no_alt,weak,,United Kingdom,,
+2026-10-26 16:07,The Mughal Palace,Bristol,https://mughalpalace.co.uk,mughalpalace.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:07,Pizza Workshop,Bristol,https://pizzaworkshop.co.uk,pizzaworkshop.co.uk,,,no_alt,weak,,United Kingdom,,
+2026-10-26 16:07,Onezone,Bristol,https://uwe.ac.uk,uwe.ac.uk,,,,no_issue,,United Kingdom,,
+2026-10-26 16:07,The Key Cafe,Bristol,https://thekeybristol.com,thekeybristol.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:07,Jean's Bistro,Bristol,https://jeansbistro.co.uk,jeansbistro.co.uk,,,,no_issue,,United Kingdom,,
+2026-10-26 16:07,The Spiny Lobster,Bristol,https://thespinylobster.co.uk,thespinylobster.co.uk,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:07,Thali Cafe,Bristol,https://thethalicafe.co.uk,thethalicafe.co.uk,sales@thethalicafe.co.uk,Thali Cafe website,ssl_invalid,sent,<179303085545.2421.9369436369865064128@gmail.com>,United Kingdom,,
+2026-10-26 16:08,Cafe on the Square,Bristol,https://smci.org.uk,smci.org.uk,info@smci.org.uk,About www.smci.org.uk,ssl_invalid,sent,<179303093307.2421.18300587991739491704@gmail.com>,United Kingdom,,
+2026-10-26 16:10,The Saigon Kitchen,Bristol,https://thesaigonkitchen.co.uk,thesaigonkitchen.co.uk,,,heavy_images,weak,,United Kingdom,,
+2026-10-26 16:10,Lazy Lobster,Bristol,https://lazylobsterltd.com,lazylobsterltd.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:10,Lunita Pasteleria,Bristol,https://lunitapasteleria.com,lunitapasteleria.com,,,no_quick_contact,weak,,United Kingdom,,
+2026-10-26 16:10,Sam Master Grill,Bristol,https://samsmastergrill.com,samsmastergrill.com,,,,no_issue,,United Kingdom,,
+2026-10-26 16:10,Eléa Greek Grill,Bristol,https://eleagreekgrill.co.uk,eleagreekgrill.co.uk,,,,no_issue,,United Kingdom,,
+2026-10-26 16:10,Mokka,Bristol,https://mokkablc.co.uk,mokkablc.co.uk,,,short_title,weak,,United Kingdom,,
+2026-10-26 16:10,Ragu,Bristol,https://ragurestaurant.com,ragurestaurant.com,info@ragurestaurant.com,Ragu website,no_lead_capture,sent,<179303104348.2421.15010852880694349664@gmail.com>,United Kingdom,,
+2026-10-27 10:01,The Fabie Beauty Salon,Chandigarh,https://thefabie.com,thefabie.com,,,short_title,weak,,India,,
+2026-10-27 10:01,Avalon Unisex Salon,Chandigarh,,gmaps:ChIJ5bLEOmftDzkRfmTNogzZ6ag,,,no_website,no_email,,India,,
+2026-10-27 10:01,The Boho Salon,Chandigarh,https://thebohosalon.in,thebohosalon.in,,,ssl_invalid,no_email,,India,,
+2026-10-27 10:01,Your Home Salon,Chandigarh,https://g.co,g.co,,,no_lead_capture,no_email,,India,,
+2026-10-27 10:01,Femina Plus Luxe Salon,Chandigarh,https://femina.plus,femina.plus,,,heavy_images,weak,,India,,
+2026-10-27 10:01,WINDLE LONDON SALON AND ACADEMY,Chandigarh,,gmaps:ChIJ_1e8rpTtDzkRi8_8ORo_6yU,,,no_website,no_email,,India,,
+2026-10-27 10:01,Glamazone Unisex Salon,Chandigarh,,gmaps:ChIJH1dbEartDzkRRy9ehKLWp24,,,no_website,no_email,,India,,
+2026-10-27 10:01,Lakme Salon,Chandigarh,https://salons.lakmesalon.in,salons.lakmesalon.in,,,,no_issue,,India,,
+2026-10-27 10:01,The Barbe Beauty Salon - For Women,Chandigarh,https://thebarbesalon.com,thebarbesalon.com,,,no_quick_contact,weak,,India,,
+2026-10-27 10:01,Under The Dryer,Chandigarh,https://under-the-dryer.grexa.site,under-the-dryer.grexa.site,,,no_alt,weak,,India,,
+2026-10-27 10:01,Aparna beauty parlour,Chandigarh,,gmaps:ChIJ4aKtPtXtDzkRBRUKTq6tLbs,,,no_website,no_email,,India,,
+2026-10-27 10:01,"Priyanka Beauty Parlour, Chandigarh",Chandigarh,,gmaps:ChIJ_aI7DwHtDzkRXQji8fqrnDk,,,no_website,no_email,,India,,
+2026-10-27 10:01,Azzaro Unisex Salon,Chandigarh,,gmaps:ChIJVVVVVaTtDzkRWsBULIvyOQc,,,no_website,no_email,,India,,
+2026-10-27 10:01,REBOOT SALON,Chandigarh,https://rebootsalon.com,rebootsalon.com,,,heavy_images,weak,,India,,
+2026-10-27 10:01,Abid Hair Master - Unisex Salon,Chandigarh,,gmaps:ChIJb_C1g1jsDzkRbp8HhTooSzA,,,no_website,no_email,,India,,
+2026-10-27 10:01,Your Beauty Heaven – Ladies Beauty Parlour,Chandigarh,,gmaps:ChIJ0w-eFGntDzkRN4rxtshpgD0,,,no_website,no_email,,India,,
+2026-10-27 10:01,New Ellcanes,Chandigarh,https://nearbuy.com,nearbuy.com,,,,unreachable,,India,,
+2026-10-27 10:01,The Bella Cut - Unisex Salon,Chandigarh,,gmaps:ChIJV_9MqKDtDzkRpWMm67oIHlQ,,,no_website,no_email,,India,,
+2026-10-27 10:01,Affinity Salon,Chandigarh,https://affinitychandigarh.com,affinitychandigarh.com,,,,no_issue,,India,,
+2026-10-27 10:01,Seven Sky Salon,Chandigarh,,gmaps:ChIJx-_-ia7tDzkRBUSoucfTgEw,,,no_website,no_email,,India,,
+2026-10-27 10:01,Glimmer 'n Gloss - unisex Salon in sector 22 chandigarh,Chandigarh,,gmaps:ChIJw4S_92ztDzkRNzncXh8QTto,,,no_website,no_email,,India,,
+2026-10-27 10:01,9teen curls,Chandigarh,,gmaps:ChIJJ3El-X3tDzkRHVNkbeWrUpI,,,no_website,no_email,,India,,
+2026-10-27 10:01,Hair Raiserz 19,Chandigarh,,gmaps:ChIJE2T8FtrtDzkRX4ysL0NRMiQ,,,no_website,no_email,,India,,
+2026-10-27 10:01,Glam Zone,Chandigarh,,gmaps:ChIJg1Kyy7ftDzkRY3ms01FXHbs,,,no_website,no_email,,India,,
+2026-10-27 10:01,MAYA′s SALON,Chandigarh,,gmaps:ChIJw7cNcbztDzkRo6f0_dypGdo,,,no_website,no_email,,India,,
+2026-10-27 10:01,Monsoon Salon,Chandigarh,,gmaps:ChIJ1Xc6jN7tDzkROeoQp2H4Ytk,,,no_website,no_email,,India,,
+2026-10-27 10:01,Hair Buzz Family Salon,Chandigarh,,gmaps:ChIJxZ5m_8btDzkRyk0dpM0JsF0,,,no_website,no_email,,India,,
+2026-10-27 10:01,DMJ & Associates,Kochi,,gmaps:ChIJA5oZtXvWCUYR-1wZMyqxnfg,,,no_website,no_email,,India,,
+2026-10-27 10:01,Tax Centre,Kochi,,gmaps:ChIJM9N8chJtCDsRKKHaP44PmG0,,,no_website,no_email,,India,,
+2026-10-27 10:01,PARAMOUNT ACCOUNTING & FINANCIAL SERVICES,Kochi,,gmaps:ChIJvWSY04BtCDsRVey0dD1JaTg,,,no_website,no_email,,India,,
+2026-10-27 10:03,Joseph and Rajaram Chartered Accountants,"Kochi, Ernakulam",https://jnr.in,jnr.in,ho@jnr.in,About jnr.in,no_quick_contact,sent,<179309540441.2442.12529821689888271431@gmail.com>,India,,
+2026-10-27 10:05,A J Associates,Kochi,,gmaps:ChIJrRqYSX1tCDsRKd1Qdlvj9Xk,,,no_website,no_email,,India,,
+2026-10-27 10:05,K J Ajith & Associates (Chartered Accountants),"Kochi, Ernakulam",https://kjaassociates.in,kjaassociates.in,aj@kjaassociates.in,A note on K J Ajith & Associates (Chartered Accountants)'s website,slow,sent,<179309553545.2442.3110682214510578464@gmail.com>,India,,
+2026-10-27 10:06,"Boby,Francis&Pradeep, Chartered Accountants","Kochi, Ernakulam",https://bobyfrancisandpradeep.com,bobyfrancisandpradeep.com,kcpfca@gmail.com,"A note on Boby,Francis&Pradeep, Chartered Accountants's website",mixed_content,sent,<179309559893.2442.11569729461443638457@gmail.com>,India,,
+2026-10-27 10:08,J JAISON & CO CHARTERED ACCOUNTANTS (JJC)— ERNAKULAM | CA IN KOCHI | Accounting Services,"Kochi, Ernakulam",https://jjcaind.com,jjcaind.com,,,short_title,weak,,India,,
+2026-10-27 10:08,James & James LLP,"Kochi, Ernakulam",https://jjglobal.in,jjglobal.in,,,no_alt,weak,,India,,
+2026-10-27 10:08,Globesta Auditors & Accountants | Accounting Training Centre In Kochi Kerala,"Kochi, Ernakulam",https://globesta.in,globesta.in,,,heavy_images,weak,,India,,
+2026-10-27 10:08,Joseph Sibin & Associates Chartered Accountants,Kochi,https://cajosephsibin.com,cajosephsibin.com,,,,no_issue,,India,,
+2026-10-27 10:08,Abhijith Preman & Co. LLP | Kochi | Ernakulam,Ernakulam,https://apcallp.com,apcallp.com,,,,no_issue,,India,,
+2026-10-27 10:08,AJ Tax consultant,Kochi,,gmaps:ChIJCbLGFndtCDsReFtT5jxNyPg,,,no_website,no_email,,India,,
+2026-10-27 10:08,"Balakrishnan & Co, Chartered Accountants",Ernakulam,,gmaps:ChIJr43Zw8pyCDsR4mZhIZ6NkQQ,,,no_website,no_email,,India,,
+2026-10-27 10:08,Accovet Ltd,"Kochi, Ernakulam",https://accovet.com,accovet.com,,,stale_year,weak,,India,,
+2026-10-27 10:08,ROSHAN THOMAS & Co (H.O)- Company Registration CA | Audit Services | Tax Consultant | Income Tax Filing CA Ernakulam,Ernakulam,https://rtnco.in,rtnco.in,bibin.jacob@rtnco.in,About rtnco.in,no_title,sent,<179309570996.2442.5677178434099327961@gmail.com>,India,,
+2026-10-27 10:10,Abraham & Antony CA Firms in Kochi,Kakkanad,https://abrahamandantony.com,abrahamandantony.com,,,heavy_page,weak,,India,,
+2026-10-27 10:10,JRS & Co.,Ernakulam,https://jrsca.com,jrsca.com,,,no_meta_desc,weak,,India,,
+2026-10-27 10:10,RAS Guru Associates - GST -Income Tax- Accounting consultant,"Kochi, Ernakulam",,gmaps:ChIJx_UocABzCDsRTiadVhF920U,,,no_website,no_email,,India,,
+2026-10-27 10:10,"MACKS & Associates, Chartered Accountants",Ernakulam,,gmaps:ChIJpcm1I78NCDsRoy-V_kaajD4,,,no_website,no_email,,India,,
+2026-10-27 10:10,Genway Realty,Coimbatore,,gmaps:ChIJD7y52NBZqDsR_VsEu3qkpxo,,,no_website,no_email,,India,,
+2026-10-27 10:10,Lands and Lands,Coimbatore,https://landsandlands.com,landsandlands.com,,,,no_issue,,India,,
+2026-10-27 10:10,Sri Balaji Real Estate,Coimbatore,https://sbrrealestate.com,sbrrealestate.com,,,heavy_images,weak,,India,,
+2026-10-27 10:10,VIP REAL ESTATE,Coimbatore,https://viprealestate.co.in,viprealestate.co.in,,,,no_issue,,India,,
+2026-10-27 10:10,Hanu Reddy Realty India Private Limited,"Ramanathapuram, Coimbatore",https://hanureddyrealty.com,hanureddyrealty.com,,,,unreachable,,India,,
+2026-10-27 10:10,Rock Realty,Coimbatore,https://rockrealty.co.in,rockrealty.co.in,,,heavy_images,weak,,India,,
+2026-10-27 10:10,JNS REAL ESTATE,Coimbatore,https://jnsrealestate.in,jnsrealestate.in,,,no_meta_desc,weak,,India,,
+2026-10-27 10:10,KSR REALTY COIMBATORE,Coimbatore,https://ksrrealty.in,ksrrealty.in,,,,no_issue,,India,,
+2026-10-27 10:10,THRONE DEVELOPER LLP,Coimbatore,,gmaps:ChIJYS4xeLJZqDsRjvhbWpajfzo,,,no_website,no_email,,India,,
+2026-10-27 10:10,Annai Realty,Coimbatore,https://annairealty.com,annairealty.com,annairealtycbe@gmail.com,About annairealty.com,mixed_content,sent,<179309584446.2442.10052562534420468008@gmail.com>,India,,
+2026-10-27 20:50,Thali Cafe,Bristol,https://thethalicafe.co.uk,thethalicafe.co.uk,sales@thethalicafe.co.uk,,ssl_invalid,bounced,,United Kingdom,,
+2026-10-28 06:58,Movement Solutions BD | Best Physiotherapy Center Gulshan,Dhaka,https://movementsolutionsbd.com,movementsolutionsbd.com,info@movementsolutionsbd.com,Calls after closing at Movement Solutions BD | Best Physiotherapy Cent,after_hours,sent,<179317069018.2298.7041077806017793713@gmail.com>,Bangladesh,clinics and doctors,10
+2026-10-28 06:59,Gulshan Physiotherapy Center,Dhaka,https://gulshanphysio.com,gulshanphysio.com,info@gulshanphysio.com,Busy phone line at Gulshan Physiotherapy Center?,busy,sent,<179317076071.2298.15055414397821851918@gmail.com>,Bangladesh,clinics and doctors,8
+2026-10-28 07:00,Anwara physiotherapy,Dhaka,,gmaps:ChIJXZBu5G_HVTcRgZaaqGiCt9c,,,no_site,no_email,,Bangladesh,clinics and doctors,6
+2026-10-28 07:00,Kinetix Solutions | Best Physiotherapy Center Gulshan 2,Dhaka,https://kinetixsolutionsbd.com,kinetixsolutionsbd.com,,,busy,low_fit,,Bangladesh,clinics and doctors,5
+2026-10-28 07:00,Motion Life Physiotherapy Clinic ( Brance - 1),Dhaka,,gmaps:ChIJXSV62CnHVTcRnn6HaunxFto,,,no_site,no_email,,Bangladesh,clinics and doctors,6
+2026-10-28 07:00,Core Physio,Dhaka,https://corephysiobd.com,corephysiobd.com,corephysiodhaka@gmail.com,Core Physio: after-hours calls,after_hours,sent,<179317083863.2298.2082799148950280245@gmail.com>,Bangladesh,clinics and doctors,8
+2026-10-28 07:02,Gulshan Physiotherapy Dhaka,Dhaka,,gmaps:ChIJAZVFhmfHVTcRojJNCscnwEk,,,no_site,no_email,,Bangladesh,clinics and doctors,6
+2026-10-28 07:02,Dhaka Specialized Physiotherapy & Rehab Center,Dhaka,,gmaps:ChIJ0fF1G1TGVTcRwyCH_n0M-ko,,,no_site,no_email,,Bangladesh,clinics and doctors,6
+2026-10-28 07:02,Rehab Solutions Physiotherapy,Dhaka,https://rehabsolutionsbd.com,rehabsolutionsbd.com,info@rehabsolutionsbd.com,Calls after closing at Rehab Solutions Physiotherapy,after_hours,sent,<179317093813.2298.9541660473309251407@gmail.com>,Bangladesh,clinics and doctors,10
+2026-10-28 07:04,Master Physiotherapy Clinic,Dhaka,https://masterphysiotherapy.com,masterphysiotherapy.com,info@masterphysiotherapy.com,Missed calls at Master Physiotherapy Clinic?,no_chat,sent,<179317108510.2298.7028247332894807402@gmail.com>,Bangladesh,clinics and doctors,7
