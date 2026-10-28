@@ -1,20 +1,27 @@
 """
-Himalaya IT Outreach Engine v6  (businesses worldwide, Google Maps data via RapidAPI)
+Himalaya IT: AI Call Agent Outreach Engine v7
+(businesses worldwide, Google Maps data via RapidAPI)
+
+We sell an AI call agent: it answers a business's phone 24/7, books appointments, answers common
+questions and sends the owner a summary of every call.
 
 Per run:
-  0. Sync inbox: mark replies / bounces, pause sending if the bounce rate is too high
+  0. Sync inbox: mark replies / bounces / opt-outs, pause sending if the bounce rate is too high
   1. Follow up (once) with leads that stayed silent for 3+ days
   2. RapidAPI 'Local Business Data' (Google Maps) finds real businesses, only in cities where it is business hours NOW
      (free OpenStreetMap is the automatic fallback if the API key/quota is not available)
-  3. We audit each website ourselves (real, measured problems only; no guessing)
-  4. Worth-it filter: only email when the problem is serious enough to matter to the owner
-  5. Public email from the site (or OSM) + MX check
-  6. Gemini (free tier) writes the email; a template is used if Gemini is unavailable
-  7. Send, log to sent_log.csv; every serious lead with a phone number goes to call_list.csv
+  3. FIT SCORE: decide which businesses really need a call agent, using measured facts only:
+       - how phone-dependent the category is (dentists, clinics, salons, home services ...)
+       - no live chat / no online booking on their website, or no website at all
+       - Google listing shows closed days or early closing (missed calls after hours)
+       - many reviews (busy phone line)
+     Businesses below SCORE_MIN are skipped, never emailed.
+  4. Public email from Google Maps data / the site + MX check
+  5. Gemini (free tier) writes a short, hooking, honest email that says who we are and what the agent does;
+     a template is used if Gemini is unavailable
+  6. Send, log to sent_log.csv; every good-fit lead with a phone number goes to call_list.csv
 
 Secrets come ONLY from environment variables (GitHub Actions secrets).
-WhatsApp version (phone numbers, human taps send): see wa_assist.py
-Report for a lead who replies "yes":   python mailor.py --report their-domain.com
 """
 
 import csv
@@ -30,6 +37,7 @@ import socket
 import sys
 import time
 from datetime import date, datetime, timedelta, timezone
+from email import message_from_bytes
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr, formatdate, make_msgid
@@ -53,11 +61,10 @@ logging.basicConfig(
 )
 log = logging.getLogger("himalaya")
 
+
 # ─────────────────────────────────────────────
 # CONFIG  (secrets from env, never hardcode)
 # ─────────────────────────────────────────────
-# Secrets come ONLY from environment variables (GitHub Actions secrets, or `export` / a shell session when testing
-# locally). NEVER paste keys into this file: the repo is public and git history keeps them forever.
 def _env(name: str, default: str = "") -> str:
     return os.environ.get(name) or default
 
@@ -68,7 +75,7 @@ RAPID_LIMIT = int(_env("RAPID_LIMIT", "30"))                          # business
 GEMINI_API_KEY = _env("GEMINI_API_KEY")                 # optional: template email is used without it
 EMAIL_USER = _env("EMAIL_USER")                         # inbox that receives replies (IMAP)
 EMAIL_PASS = _env("EMAIL_PASS")
-SMTP_HOST = _env("SMTP_HOST", "smtp.gmail.com")         # change later to a proper sending service
+SMTP_HOST = _env("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(_env("SMTP_PORT", "587"))
 SMTP_USER = _env("SMTP_USER", EMAIL_USER)
 SMTP_PASS = _env("SMTP_PASS", EMAIL_PASS)
@@ -83,37 +90,42 @@ LEADS_PER_SEARCH = int(_env("LEADS_PER_SEARCH", "25"))
 FOLLOWUP_AFTER_DAYS = int(_env("FOLLOWUP_AFTER_DAYS", "3"))
 FOLLOWUP_MAX_AGE_DAYS = int(_env("FOLLOWUP_MAX_AGE_DAYS", "14"))
 BOUNCE_PAUSE_RATE = float(_env("BOUNCE_PAUSE_RATE", "0.15"))
-BOUNCE_MIN_SAMPLE = int(_env("BOUNCE_MIN_SAMPLE", "30"))   # never judge the bounce rate on fewer sends than this
-BOUNCE_MIN_COUNT = int(_env("BOUNCE_MIN_COUNT", "4"))      # ...and never pause for fewer bounces than this
-FORCE_RESUME = _env("FORCE_RESUME", "false").lower() == "true"   # manual override of the bounce pause
+BOUNCE_MIN_SAMPLE = int(_env("BOUNCE_MIN_SAMPLE", "30"))
+BOUNCE_MIN_COUNT = int(_env("BOUNCE_MIN_COUNT", "4"))
+FORCE_RESUME = _env("FORCE_RESUME", "false").lower() == "true"
 MAX_RUNTIME_S = int(_env("MAX_RUNTIME_MIN", "40")) * 60  # stop early so the log always gets saved
-SLEEP_MIN, SLEEP_MAX = 60, 150            # slower, human-like pacing helps deliverability
-WARMUP = _env("WARMUP", "true").lower() == "true"   # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
+SLEEP_MIN, SLEEP_MAX = 60, 150                           # slower, human-like pacing helps deliverability
+WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
+SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Himalaya IT")
 COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # set as repo Variable; REQUIRED to email US businesses (CAN-SPAM)
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_PITCH = _env(
-    "COMPANY_PITCH",
-    "Himalaya IT is a 25-member team based in Greater Noida. We fix and rebuild business "
-    "websites: speed, mobile layout, SEO basics, and lead capture (WhatsApp, call and enquiry buttons).",
+COMPANY_WHO = _env("COMPANY_WHO", f"{COMPANY_NAME} is a 25-member software team based in Greater Noida, India.")
+# {does} is replaced with what the agent does for that kind of business (books appointments, takes reservations ...)
+PRODUCT_PITCH = _env(
+    "PRODUCT_PITCH",
+    "We build AI call agents: the agent answers your business phone 24/7, talks to callers naturally, {does}, "
+    "answers common questions such as hours, prices and location, and sends you a short summary of every call.",
 )
 
 MODEL = _env("GEMINI_MODEL", "gemini-2.5-flash")        # change here if Google renames/retires it
 LOG_CSV = "sent_log.csv"
 CALL_CSV = "call_list.csv"
 SUPPRESS_FILE = "suppression.txt"
-LOG_FIELDS = ["date", "business", "city", "website", "domain", "email", "subject", "main_issue", "status", "message_id", "country"]
-CALL_FIELDS = ["date", "business", "category", "city", "country", "website", "phone", "email", "instagram", "facebook",
-               "rating", "reviews", "main_issue", "what_to_say"]
-BLOCKING_STATUSES = {"sent", "no_email", "no_issue", "weak", "bad_email", "dup_email"}
+LOG_FIELDS = ["date", "business", "city", "website", "domain", "email", "subject", "main_issue", "status",
+              "message_id", "country", "category", "score"]
+CALL_FIELDS = ["date", "business", "category", "city", "country", "website", "phone", "email", "instagram",
+               "facebook", "rating", "reviews", "angle", "score", "what_to_say"]
+# 'main_issue' in the log stores the email ANGLE (after_hours, no_site, busy, no_chat, general)
+BLOCKING_STATUSES = {"sent", "no_email", "low_fit", "no_phone", "bad_email", "dup_email", "optout"}
 START_TS = time.time()
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; HimalayaITAudit/3.0)",
+    "User-Agent": "Mozilla/5.0 (compatible; HimalayaITBot/4.0)",
     "Accept-Language": "en;q=0.9,*;q=0.5",
 }
 
@@ -161,62 +173,75 @@ CITIES = [
 # Canada is blocked by default (strict consent rules). Set BLOCKED_COUNTRIES=none to allow it.
 BLOCKED_COUNTRIES = {c.strip().lower() for c in os.environ.get("BLOCKED_COUNTRIES", "Canada").split(",")
                      if c.strip() and c.strip().lower() != "none"}
+# In these places, emailing a person's private address (gmail etc.) is not allowed without consent:
+# only company-domain addresses are used there.
+STRICT_COUNTRIES = {"United Kingdom", "Ireland", "Netherlands", "Sweden", "Denmark"}
 SEARCH_RADIUS_M = int(_env("SEARCH_RADIUS_M", "12000"))
 INCLUDE_CHAINS = _env("INCLUDE_CHAINS", "false").lower() == "true"
 
+# Businesses where a missed phone call = a lost customer.
+#   weight   : how phone-dependent the category is (3 = very, 2 = quite)
+#   customer : who calls   |  call_for : what they call to do   |  does : what our agent does for them
 CATEGORIES = {
-    "dental clinics": [("amenity", "dentist")],
-    "clinics and hospitals": [("amenity", "clinic"), ("amenity", "hospital"), ("amenity", "doctors")],
-    "diagnostic labs": [("healthcare", "laboratory")],
-    "restaurants and cafes": [("amenity", "restaurant"), ("amenity", "cafe")],
-    "hotels and guest houses": [("tourism", "hotel"), ("tourism", "guest_house")],
-    "gyms and fitness studios": [("leisure", "fitness_centre")],
-    "salons and spas": [("shop", "hairdresser"), ("shop", "beauty")],
-    "real estate agencies": [("office", "estate_agent")],
-    "furniture and interior shops": [("shop", "furniture"), ("shop", "interior_decoration")],
-    "lawyers and accountants": [("office", "lawyer"), ("office", "accountant")],
-    "schools, colleges and coaching": [("amenity", "school"), ("amenity", "college"), ("amenity", "language_school")],
-    "travel agencies": [("shop", "travel_agency")],
-    "car dealers and garages": [("shop", "car"), ("shop", "car_repair")],
-    "event and wedding venues": [("amenity", "events_venue")],
+    "dental clinics": {
+        "osm": [("amenity", "dentist")], "q": ["dental clinic", "dentist"], "weight": 3,
+        "customer": "patient", "call_for": "book an appointment", "does": "books and reschedules appointments"},
+    "clinics and doctors": {
+        "osm": [("amenity", "clinic"), ("amenity", "doctors")],
+        "q": ["clinic", "skin clinic", "physiotherapy clinic"], "weight": 3,
+        "customer": "patient", "call_for": "book an appointment", "does": "books and reschedules appointments"},
+    "veterinary clinics": {
+        "osm": [("amenity", "veterinary")], "q": ["veterinary clinic", "pet clinic"], "weight": 3,
+        "customer": "pet owner", "call_for": "book a visit", "does": "books visits and takes basic details about the pet"},
+    "diagnostic labs": {
+        "osm": [("healthcare", "laboratory")], "q": ["diagnostic lab", "pathology lab"], "weight": 2,
+        "customer": "patient", "call_for": "book a test", "does": "books tests and home sample collection"},
+    "salons and spas": {
+        "osm": [("shop", "hairdresser"), ("shop", "beauty")], "q": ["beauty salon", "spa", "hair salon"], "weight": 3,
+        "customer": "client", "call_for": "book a slot", "does": "books and reschedules appointments"},
+    "restaurants": {
+        "osm": [("amenity", "restaurant")], "q": ["restaurant", "family restaurant"], "weight": 2,
+        "customer": "guest", "call_for": "reserve a table", "does": "takes table reservations and answers menu questions"},
+    "hotels and guest houses": {
+        "osm": [("tourism", "hotel"), ("tourism", "guest_house")], "q": ["hotel", "guest house"], "weight": 3,
+        "customer": "guest", "call_for": "check room availability", "does": "answers room and rate enquiries and takes booking requests"},
+    "gyms and yoga studios": {
+        "osm": [("leisure", "fitness_centre")], "q": ["gym", "yoga studio"], "weight": 2,
+        "customer": "prospective member", "call_for": "ask about membership", "does": "answers membership and timing questions and books trial sessions"},
+    "real estate agencies": {
+        "osm": [("office", "estate_agent")], "q": ["real estate agency"], "weight": 3,
+        "customer": "buyer", "call_for": "enquire about a property", "does": "captures buyer and renter enquiries and books property viewings"},
+    "lawyers": {
+        "osm": [("office", "lawyer")], "q": ["lawyer", "law firm"], "weight": 2,
+        "customer": "client", "call_for": "book a consultation", "does": "takes new-client details and books consultations"},
+    "car repair and dealers": {
+        "osm": [("shop", "car_repair"), ("shop", "car")], "q": ["car repair", "car service center", "car dealer"], "weight": 3,
+        "customer": "customer", "call_for": "book a service", "does": "books service slots and captures enquiries"},
+    "home services": {
+        "osm": [("craft", "plumber"), ("craft", "electrician"), ("craft", "hvac")],
+        "q": ["plumber", "electrician", "AC repair service"], "weight": 3,
+        "customer": "customer", "call_for": "get a job quoted", "does": "captures job details and books visits"},
+    "coaching and schools": {
+        "osm": [("amenity", "school"), ("amenity", "college"), ("amenity", "language_school")],
+        "q": ["coaching institute", "tutoring center", "private school"], "weight": 2,
+        "customer": "parent", "call_for": "ask about admissions", "does": "answers admission and fee questions and books campus visits"},
+    "event and wedding venues": {
+        "osm": [("amenity", "events_venue")], "q": ["wedding venue", "banquet hall"], "weight": 2,
+        "customer": "customer", "call_for": "check a date", "does": "answers date and pricing enquiries and books venue visits"},
+    "travel agencies": {
+        "osm": [("shop", "travel_agency")], "q": ["travel agency"], "weight": 2,
+        "customer": "traveller", "call_for": "enquire about a trip", "does": "captures trip enquiries and books consultation calls"},
 }
 
-ISSUE_PHRASES = {
-    "ssl_invalid": "the site's security certificate is expired or invalid, so visitors see a 'Not secure' warning",
-    "no_https": "the site has no HTTPS, so browsers label it 'Not secure'",
-    "mixed_content": "some parts of the site load insecurely, which can trigger browser warnings",
-    "no_viewport": "the site isn't set up for mobile screens, so it looks shrunken on phones",
-    "slow": "the homepage loads slowly, and slow sites lose visitors before they ever enquire",
-    "heavy_page": "the homepage is very heavy, which slows it down on mobile data",
-    "heavy_images": "lots of images load upfront, which slows the site on phones",
-    "no_alt": "most images have no alt text, which hurts Google Images and accessibility",
-    "no_lead_capture": "there's no call, WhatsApp, contact or enquiry option on the homepage, so interested visitors can't easily reach you",
-    "no_quick_contact": "there's no click-to-call or WhatsApp button, which most mobile visitors expect",
-    "no_title": "the homepage has no page title, so Google has nothing to show in search",
-    "short_title": "the page title is too generic to rank for local searches",
-    "no_meta_desc": "there's no meta description, so Google picks random text for your listing",
-    "no_h1": "the homepage has no main heading, which weakens search ranking",
-    "stale_year": "the footer year is out of date, which makes the business look inactive",
-    "no_website": "your Google Maps listing has no website of its own, so people who find you can't see your services or contact you easily",
-}
-FIXES = {
-    "ssl_invalid": "Renew/replace the SSL certificate and force HTTPS (free via Let's Encrypt or Cloudflare).",
-    "no_https": "Install an SSL certificate and redirect all HTTP traffic to HTTPS.",
-    "mixed_content": "Update every http:// resource link to https:// so no browser warnings appear.",
-    "no_viewport": "Add a mobile viewport tag and make the layout responsive for phones.",
-    "slow": "Enable caching and compression, use a CDN, and trim heavy scripts and images.",
-    "heavy_page": "Reduce page weight: compress assets and remove unused code.",
-    "heavy_images": "Compress images, use modern formats (WebP) and lazy-load below-the-fold images.",
-    "no_alt": "Add descriptive alt text to images for Google Images and accessibility.",
-    "no_lead_capture": "Add a click-to-call button, WhatsApp chat button and a short enquiry/booking form on the homepage.",
-    "no_quick_contact": "Add a sticky click-to-call and WhatsApp button for mobile visitors.",
-    "no_title": "Write a clear page title with the service and city, e.g. 'Dentist in <City> | <Name>'.",
-    "short_title": "Expand the page title to include the service and location.",
-    "no_meta_desc": "Write a 150-character meta description that sells the click.",
-    "no_h1": "Add one clear main heading (H1) describing what you do and where.",
-    "stale_year": "Update the footer year and refresh dated content so the site looks active.",
-    "no_website": "Build a fast, mobile-friendly website with call/WhatsApp buttons and link it from the Google listing.",
-}
+# Markers searched in the homepage source (script tags included, so JS-injected widgets are caught).
+CHAT_MARKERS = ("tawk.to", "intercom", "drift.com", "crisp.chat", "tidio", "livechatinc", "livechat", "hs-scripts",
+                "zendesk", "zopim", "freshchat", "olark", "smartsupp", "manychat", "botpress", "landbot", "chatbot",
+                "chat-widget", "jivochat", "gupshup", "wati.io", "ai-assistant", "verloop", "yellow.ai")
+BOOKING_MARKERS = ("calendly", "booksy", "fresha", "setmore", "acuity", "squareup.com/appointments", "simplybook",
+                   "mindbody", "opentable", "resy.com", "zenoti", "practo", "zocdoc", "bookingbug", "cal.com",
+                   "book online", "online booking", "online appointment", "book your appointment online",
+                   "reserve online", "book a table online", "appointy", "vagaro", "timetap", "bookeo")
+
 
 # ─────────────────────────────────────────────
 # GEMINI (optional, free tier) with circuit breaker
@@ -237,7 +262,7 @@ def gemini_call(prompt: str, json_mode: bool = False, retries: int = 2) -> str:
     global _gemini_failures
     if not GEMINI_API_KEY or _gemini_failures >= 2:
         return ""
-    cfg = {"temperature": 0.6}
+    cfg = {"temperature": 0.7}
     if json_mode:
         cfg["response_mime_type"] = "application/json"
     for attempt in range(1, retries + 1):
@@ -316,7 +341,7 @@ def parse_dt(s: str) -> Optional[datetime]:
 
 
 def load_seen(rows: list) -> set:
-    """Domains we never process again. 'unreachable' only blocks after 2 failures (could be a blip)."""
+    """Domains/keys we never process again. 'unreachable' only blocks after 2 failures (could be a blip)."""
     seen, unreachable = set(), {}
     for r in rows:
         d, st = r.get("domain", ""), r.get("status")
@@ -328,7 +353,8 @@ def load_seen(rows: list) -> set:
 
 
 def load_seen_emails(rows: list) -> set:
-    return {(r.get("email") or "").lower() for r in rows if r.get("status") in ("sent", "followup_sent") and r.get("email")}
+    return {(r.get("email") or "").lower() for r in rows
+            if r.get("status") in ("sent", "followup_sent") and r.get("email")}
 
 
 def load_suppressed() -> set:
@@ -336,6 +362,16 @@ def load_suppressed() -> set:
         return set()
     with open(SUPPRESS_FILE, encoding="utf-8") as f:
         return {ln.strip().lower() for ln in f if ln.strip() and not ln.startswith("#")}
+
+
+def add_suppression(value: str) -> None:
+    value = (value or "").strip().lower()
+    if not value:
+        return
+    if value in load_suppressed():
+        return
+    with open(SUPPRESS_FILE, "a", encoding="utf-8") as f:
+        f.write(value + "\n")
 
 
 def count_today(rows: list, status: str) -> int:
@@ -371,8 +407,8 @@ def ensure_call_log() -> None:
         _call_seen.update(r.get("website", "") for r in csv.DictReader(f))
 
 
-def add_call_lead(biz: dict, website: str, phone: str, email: str, issues: list) -> None:
-    """Serious problem + phone number = a lead you can call / WhatsApp / DM yourself (converts better than cold email)."""
+def add_call_lead(biz: dict, website: str, phone: str, email: str, angle: str, score: int, fact: str) -> None:
+    """Good-fit lead + phone number = a lead you can also call / WhatsApp yourself."""
     if not phone or website in _call_seen:
         return
     _call_seen.add(website)
@@ -381,7 +417,7 @@ def add_call_lead(biz: dict, website: str, phone: str, email: str, issues: list)
         "city": biz["city"], "country": biz.get("country", ""), "website": website, "phone": phone,
         "email": email or "", "instagram": biz.get("instagram") or "", "facebook": biz.get("facebook") or "",
         "rating": biz.get("rating") or "", "reviews": biz.get("reviews") or "",
-        "main_issue": issues[0]["key"], "what_to_say": ISSUE_PHRASES.get(issues[0]["key"], ""),
+        "angle": angle, "score": score, "what_to_say": fact,
     }
     with open(CALL_CSV, "a", newline="", encoding="utf-8") as f:
         csv.DictWriter(f, fieldnames=CALL_FIELDS).writerow(row)
@@ -440,8 +476,9 @@ def clean_phone(raw: Optional[str]) -> str:
 
 
 def overpass_query(lat: float, lon: float, tags: list) -> str:
+    # a business qualifies if it lists a website OR a phone number
     parts = "".join(
-        f'nwr["{k}"="{v}"][~"^(contact:)?website$"~"."](around:{SEARCH_RADIUS_M},{lat},{lon});' for k, v in tags
+        f'nwr["{k}"="{v}"][~"^(contact:)?(website|phone)$"~"."](around:{SEARCH_RADIUS_M},{lat},{lon});' for k, v in tags
     )
     return f"[out:json][timeout:90];({parts});out tags 200;"
 
@@ -450,7 +487,7 @@ def discover(city: tuple, category: str) -> list:
     name_, country, lat, lon = city
     log.info(f"🔎 Discovering (OpenStreetMap): {category} in {name_}, {country}")
     time.sleep(2)                                   # be polite to the free public servers
-    query, data = overpass_query(lat, lon, CATEGORIES[category]), None
+    query, data = overpass_query(lat, lon, CATEGORIES[category]["osm"]), None
     for attempt in range(3):
         for url in OVERPASS_URLS:
             try:
@@ -467,28 +504,35 @@ def discover(city: tuple, category: str) -> list:
 
     elements = (data or {}).get("elements", [])
     random.Random(f"{date.today()}-{name_}-{category}").shuffle(elements)
-    out, seen_hosts = [], set()
+    out, seen_keys = [], set()
     for el in elements:
         tags = el.get("tags") or {}
         site = tags.get("website") or tags.get("contact:website")
         biz_name = (tags.get("name") or "").strip()
-        if not site or not biz_name:
+        if not biz_name:
             continue
         if not INCLUDE_CHAINS and (tags.get("brand") or tags.get("brand:wikidata") or tags.get("operator:wikidata")):
             continue
-        h = host_of(str(site))
-        if not h or "." not in h or h in seen_hosts or any(d in h for d in DIRECTORY_DOMAINS):
+        h = host_of(str(site)) if site else ""
+        if h and ("." not in h or any(d in h for d in DIRECTORY_DOMAINS)):
+            h = ""
+        phone = clean_phone(tags.get("phone") or tags.get("contact:phone") or tags.get("contact:mobile") or tags.get("mobile"))
+        if not h and not phone:
             continue
-        seen_hosts.add(h)
+        key = h or f"osm:{el.get('type')}{el.get('id')}"
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
         out.append({
             "name": biz_name, "host": h, "city": name_, "country": country, "category": category,
-            "key": h, "tz": None, "place_id": "", "rating": None, "reviews": None, "instagram": "", "facebook": "", "source": "osm",
+            "key": key, "tz": None, "place_id": "", "rating": None, "reviews": None, "instagram": "", "facebook": "",
+            "source": "osm", "hours": None,
             "api_emails": [e for e in [clean_osm_email(tags.get("email") or tags.get("contact:email"))] if e],
-            "phone": clean_phone(tags.get("phone") or tags.get("contact:phone") or tags.get("contact:mobile") or tags.get("mobile")),
+            "phone": phone,
         })
         if len(out) >= LEADS_PER_SEARCH:
             break
-    log.info(f"   → {len(out)} candidate websites")
+    log.info(f"   → {len(out)} candidate businesses")
     return out
 
 
@@ -504,23 +548,6 @@ COUNTRY_CODE = {
     "Hong Kong": "hk", "Pakistan": "pk", "Bangladesh": "bd", "Sri Lanka": "lk", "Nepal": "np", "Nigeria": "ng",
     "Ghana": "gh", "Kenya": "ke", "South Africa": "za", "Netherlands": "nl", "Sweden": "se", "Denmark": "dk",
     "Canada": "ca",
-}
-# Clean, natural Google-Maps search phrases (a messy query like "Hotels in San Francisco, viatnam" returns junk)
-API_QUERY = {
-    "dental clinics": ["dental clinic", "dentist"],
-    "clinics and hospitals": ["clinic", "skin clinic", "physiotherapy clinic"],
-    "diagnostic labs": ["diagnostic lab", "pathology lab"],
-    "restaurants and cafes": ["restaurant", "cafe"],
-    "hotels and guest houses": ["hotel", "guest house"],
-    "gyms and fitness studios": ["gym", "yoga studio"],
-    "salons and spas": ["beauty salon", "spa"],
-    "real estate agencies": ["real estate agency"],
-    "furniture and interior shops": ["interior designer", "furniture store"],
-    "lawyers and accountants": ["lawyer", "accountant"],
-    "schools, colleges and coaching": ["coaching institute", "tutoring center", "private school"],
-    "travel agencies": ["travel agency"],
-    "car dealers and garages": ["car repair", "car dealer"],
-    "event and wedding venues": ["wedding venue", "banquet hall"],
 }
 
 
@@ -575,7 +602,7 @@ def rapid_search(query: str, lat: float, lng: float, region: str, limit: int, of
 
 def discover_api(city: tuple, category: str, usage: dict) -> Optional[list]:
     name_, country, lat, lon = city
-    phrase = random.Random(f"{date.today()}-{name_}-{category}").choice(API_QUERY[category])
+    phrase = random.Random(f"{date.today()}-{name_}-{category}").choice(CATEGORIES[category]["q"])
     okey = f"{name_}|{phrase}"
     offset = int(usage["offsets"].get(okey, 0))
     query = f"{phrase} in {name_}, {country}"
@@ -586,19 +613,22 @@ def discover_api(city: tuple, category: str, usage: dict) -> Optional[list]:
         return None
     usage["offsets"][okey] = offset + RAPID_LIMIT if len(data) >= RAPID_LIMIT else 0   # next page, or start over
 
-    out, skipped = [], {"closed": 0, "big_or_chain": 0, "nothing_to_contact": 0, "duplicate": 0}
+    out, skipped = [], {"closed": 0, "big_or_chain": 0, "no_phone": 0, "duplicate": 0}
     seen_keys = set()
     for it in data:
         if not isinstance(it, dict) or not (it.get("name") or "").strip():
             continue
         if (it.get("business_status") or "OPEN") != "OPEN":
-            skipped["closed"] += 1                    # e.g. CLOSED_PERMANENTLY (your sample had one)
+            skipped["closed"] += 1
             continue
         ec = it.get("emails_and_contacts") or {}
         emails = [e for e in (ec.get("emails") or []) if isinstance(e, str)]
         phones = ec.get("phone_numbers") or []
-        reviews = int(it.get("review_count") or 0)
-        # Many different emails/phones = a multi-location brand (like your sample result); 3000+ reviews = large business
+        try:
+            reviews = int(it.get("review_count") or 0)
+        except (TypeError, ValueError):
+            reviews = 0
+        # Many different emails/phones = a multi-location brand; 3000+ reviews = large business
         if not INCLUDE_CHAINS and (reviews > 3000 or len(set(emails)) >= 4 or len(set(phones)) >= 4):
             skipped["big_or_chain"] += 1
             continue
@@ -606,9 +636,9 @@ def discover_api(city: tuple, category: str, usage: dict) -> Optional[list]:
         host = host_of(site) if site else ""
         if host and ("." not in host or any(d in host for d in DIRECTORY_DOMAINS)):
             host = ""                                 # a Facebook / listing page is not their own website
-        phone = clean_phone(it.get("phone_number"))
-        if not host and not phone:
-            skipped["nothing_to_contact"] += 1
+        phone = clean_phone(it.get("phone_number")) or (clean_phone(phones[0]) if phones else "")
+        if not phone and not host:
+            skipped["no_phone"] += 1
             continue
         key = host or f"gmaps:{it.get('place_id') or it.get('business_id') or it['name']}"
         if key in seen_keys:
@@ -620,6 +650,7 @@ def discover_api(city: tuple, category: str, usage: dict) -> Optional[list]:
             "category": category, "phone": phone, "api_emails": emails, "tz": it.get("timezone"),
             "rating": it.get("rating"), "reviews": reviews, "place_id": it.get("place_id") or "",
             "instagram": ec.get("instagram") or "", "facebook": ec.get("facebook") or "", "source": "rapidapi",
+            "hours": it.get("working_hours") or it.get("working_hours_old_format"),
         })
     log.info(f"   → {len(out)} usable of {len(data)} returned (skipped: {skipped})")
     return out
@@ -688,126 +719,132 @@ def pick_combos(n: int, now: Optional[datetime] = None) -> list:
 
 
 # ─────────────────────────────────────────────
-# WEBSITE AUDIT (measured facts only)
+# FIT SCORING: does this business really need a call agent? (measured facts only)
 # ─────────────────────────────────────────────
+DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+TIME_RE = re.compile(r"(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m", re.I)
+
+
 def fetch_site(host: str):
-    """Returns (response, seconds, notes). notes: ssl_problem in {None,'real','unsure'}, https_timeout."""
-    notes = {"ssl_problem": None, "https_timeout": False}
-    for scheme in ("https", "http"):
-        for verify in ((True, False) if scheme == "https" else (True,)):
-            try:
-                url = f"{scheme}://{host}/"
-                t0 = time.time()
-                r = requests.get(url, headers=HEADERS, timeout=15, allow_redirects=True, verify=verify)
-                elapsed = time.time() - t0
-                if r.status_code >= 400 or "html" not in r.headers.get("Content-Type", "").lower():
-                    break
-                if elapsed > 3:                       # re-measure: first request may include cold start
-                    t1 = time.time()
-                    try:
-                        requests.get(url, headers=HEADERS, timeout=15, verify=verify)
-                        elapsed = min(elapsed, time.time() - t1)
-                    except requests.RequestException:
-                        pass
-                return r, elapsed, notes
-            except requests.exceptions.SSLError as e:
-                if verify:
-                    msg = str(e).lower()
-                    # Only an expired / mismatched / self-signed cert is a REAL problem. "unable to get local
-                    # issuer" is often our runner's CA store, so we make no claim about it.
-                    real = any(k in msg for k in ("expired", "hostname", "doesn't match", "self-signed", "self signed"))
-                    notes["ssl_problem"] = "real" if real else (notes["ssl_problem"] or "unsure")
-                    continue
-                break
-            except requests.Timeout:
-                if scheme == "https":
-                    notes["https_timeout"] = True
-                break
-            except requests.RequestException:
-                break
-    return None, None, notes
+    """Returns the homepage response, or None if the site cannot be loaded."""
+    for scheme, verify in (("https", True), ("https", False), ("http", True)):
+        try:
+            r = requests.get(f"{scheme}://{host}/", headers=HEADERS, timeout=15, allow_redirects=True, verify=verify)
+            if r.status_code < 400 and "html" in r.headers.get("Content-Type", "").lower():
+                return r
+        except requests.RequestException:
+            continue
+    return None
 
 
-def audit_site(r, elapsed: float, notes: dict) -> list:
-    issues = []
-
-    def add(sev: int, key: str, detail: str):
-        issues.append({"severity": sev, "key": key, "detail": detail})
-
+def site_signals(r) -> dict:
+    """What their website does (or does not) offer to someone who wants to reach them."""
+    low = r.text.lower()
     soup = BeautifulSoup(r.text, "html.parser")
-    page_text = soup.get_text(" ", strip=True)
-    final_url = r.url
-    js_shell = len(page_text) < 300      # page is built by JavaScript: content checks would be guesses
-
-    if notes.get("ssl_problem") == "real":
-        add(3, "ssl_invalid", "The HTTPS certificate is expired, mismatched or self-signed, so browsers show a 'Not secure' warning to visitors")
-    elif not final_url.startswith("https://") and not notes.get("https_timeout") and not notes.get("ssl_problem"):
-        add(3, "no_https", "The site loads over plain HTTP (no HTTPS), so browsers mark it 'Not secure'")
-    elif final_url.startswith("https://"):
-        mixed = soup.select("img[src^='http://'], script[src^='http://'], iframe[src^='http://'], link[rel=stylesheet][href^='http://']")
-        if mixed:
-            add(2, "mixed_content", f"{len(mixed)} resources load over insecure HTTP on an HTTPS page")
-
-    if not soup.find("meta", attrs={"name": re.compile("^viewport$", re.I)}):
-        add(3, "no_viewport", "No mobile viewport tag, so the site likely displays as a shrunken desktop page on phones")
-
-    if elapsed and elapsed > 6.0:
-        add(3, "slow", f"The homepage took {elapsed:.0f}s to load its HTML in our test")
-    elif elapsed and elapsed > 4.0:
-        add(2, "slow", f"The homepage took {elapsed:.0f}s to load its HTML in our test")
-    if len(r.content) > 2_000_000:
-        add(2, "heavy_page", f"The homepage HTML alone is {len(r.content)/1e6:.1f} MB")
-
-    title = (soup.title.string or "").strip() if soup.title and soup.title.string else ""
-    if not title:
-        add(2, "no_title", "The homepage has no page title, so Google has nothing to show in search results")
-    elif len(title) < 15 and not js_shell:
-        add(1, "short_title", f"The page title is only '{title}', too generic to rank for local searches")
-    if not soup.find("meta", attrs={"name": re.compile("^description$", re.I)}):
-        add(1, "no_meta_desc", "No meta description, so Google picks random text for your search listing")
-
-    if not js_shell:
-        imgs = soup.find_all("img")
-        eager = [i for i in imgs if (i.get("loading") or "").lower() != "lazy"]
-        if len(eager) > 25:
-            add(2, "heavy_images", f"{len(eager)} images load upfront without lazy-loading, which slows phones on mobile data")
-        if len(imgs) >= 5:
-            no_alt = [i for i in imgs if not (i.get("alt") or "").strip()]
-            if len(no_alt) / len(imgs) > 0.5:
-                add(1, "no_alt", f"{len(no_alt)} of {len(imgs)} images have no alt text")
-
-        hrefs = [(a.get("href") or "").lower() for a in soup.find_all("a")]
-        has_tel = any(h.startswith("tel:") for h in hrefs)
-        has_wa = any("wa.me" in h or "whatsapp" in h for h in hrefs)
-        has_form = soup.find("form") is not None
-        has_contact_link = any(k in h for h in hrefs for k in ("contact", "enquir", "inquir", "booking", "appointment"))
-        if not (has_tel or has_wa or has_form):
-            if has_contact_link:
-                add(2, "no_quick_contact", "No click-to-call or WhatsApp button, which most mobile visitors expect")
-            else:
-                add(3, "no_lead_capture", "The homepage has no click-to-call, WhatsApp, contact link or enquiry form, so interested visitors have no easy way to reach out")
-        elif not (has_tel or has_wa):
-            add(2, "no_quick_contact", "No click-to-call or WhatsApp button, which most mobile visitors expect")
-
-        if not soup.find("h1"):
-            add(1, "no_h1", "No main heading (H1) on the homepage")
-        years = [int(y) for y in re.findall(r"(?:©|&copy;|copyright)\s*(?:20\d{2}\s*[-–]\s*)?(20\d{2})", page_text, re.I)]
-        if years and max(years) < date.today().year - 1:
-            add(2, "stale_year", f"The footer still says © {max(years)}, which makes the business look inactive")
-
-    issues.sort(key=lambda x: -x["severity"])
-    return issues
+    hrefs = [(a.get("href") or "").lower() for a in soup.find_all("a")]
+    return {
+        "chat": any(k in low for k in CHAT_MARKERS),
+        "booking": any(k in low for k in BOOKING_MARKERS),
+        "tel": any(h.startswith("tel:") for h in hrefs),
+        "form": soup.find("form") is not None,
+    }
 
 
-def worth_emailing(issues: list) -> bool:
-    """Only email when the problem matters to the owner: one serious issue, or several medium ones."""
-    if not issues:
-        return False
-    return issues[0]["severity"] >= 3 or sum(i["severity"] for i in issues if i["severity"] >= 2) >= 4
+def parse_hours(wh) -> dict:
+    """Read the Google Maps opening hours. Only reports what it can actually parse."""
+    out = {"known": False, "closed_days": [], "early_close": False, "typical_close": None}
+    try:
+        if not isinstance(wh, dict):
+            return out
+        days = {}
+        for k, v in wh.items():
+            name = str(k).strip().lower()
+            if name in DAY_NAMES:
+                days[name] = " ".join(map(str, v)) if isinstance(v, (list, tuple)) else str(v)
+        if len(days) < 5:
+            return out
+        closes = []
+        for d in DAY_NAMES:
+            s = days.get(d)
+            if s is None:
+                continue
+            low = s.lower()
+            if "24 hours" in low or "open 24" in low:
+                closes.append(24.0)
+                continue
+            times = TIME_RE.findall(s)
+            if "closed" in low and not times:
+                out["closed_days"].append(d.capitalize())
+                continue
+            if times:
+                h, mnt, ap = times[-1]
+                hh = int(h) % 12 + (12 if ap.lower() == "p" else 0)
+                if hh == 0:
+                    hh = 24
+                closes.append(hh + int(mnt or 0) / 60)
+        out["known"] = True
+        if len(closes) >= 4:
+            closes.sort()
+            med = closes[len(closes) // 2]
+            out["typical_close"] = med
+            out["early_close"] = med <= 19.0
+    except Exception:  # noqa: BLE001
+        return {"known": False, "closed_days": [], "early_close": False, "typical_close": None}
+    return out
+
+
+def hours_fact(hrs: dict) -> str:
+    if hrs["closed_days"]:
+        return f"your Google listing shows you're closed on {' and '.join(hrs['closed_days'][:2])}"
+    if hrs["early_close"] and hrs["typical_close"]:
+        h12 = int(hrs["typical_close"] + 0.5) % 12 or 12
+        return f"your Google listing shows you usually close by around {h12} PM"
+    return ""
+
+
+def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
+    """Returns (score, angle, fact). 'site' is 'none' (no website), 'ok' (loaded) or 'unknown' (could not load)."""
+    info = CATEGORIES[biz["category"]]
+    pts = info["weight"]
+    reviews = int(biz.get("reviews") or 0)
+    facts = {}
+
+    if site == "none":
+        pts += 3
+        facts["no_site"] = (f"Google Maps lists no website for {biz['name']}, "
+                            "so the phone is the main way new customers reach you")
+    elif site == "ok":
+        if not sig.get("chat"):
+            pts += 2
+        if not sig.get("booking"):
+            pts += 1
+        if sig.get("tel") and not sig.get("form"):
+            pts += 1
+        if not sig.get("chat") and not sig.get("booking"):
+            facts["no_chat"] = ("your website has no live chat or online booking, "
+                                "so a phone call is the main way a visitor reaches you")
+        elif not sig.get("chat"):
+            facts["no_chat"] = "your website has no live chat, so a phone call is the main way a visitor reaches you"
+
+    hf = hours_fact(hrs)
+    if hf:
+        pts += 2
+        facts["after_hours"] = hf
+    if reviews >= 100:
+        pts += 2
+    elif reviews >= 30:
+        pts += 1
+    if reviews >= 30:
+        facts["busy"] = f"you have {reviews} Google reviews, so plenty of people are clearly finding you"
+
+    for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
+        if angle in facts:
+            return pts, angle, facts[angle]
+    return pts, "general", "your business depends on customers being able to reach you by phone"
 
 
 # ─────────────────────────────────────────────
-# EMAIL + PHONE DISCOVERY / VERIFICATION
+# EMAIL DISCOVERY / VERIFICATION
 # ─────────────────────────────────────────────
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.in", "yahoo.co.uk", "yahoo.com.au", "outlook.com",
@@ -816,7 +853,8 @@ FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.in", "yahoo.co.u
 JUNK_SUBSTR = ("sentry", "wixpress", "example", "yourdomain", "domain.com", "email.com", "noreply",
                "no-reply", "donotreply", "u003e", "@2x", "godaddy", "privacy@", "abuse@")
 JUNK_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff")
-PREFERRED_PREFIX = ("info", "contact", "hello", "enquiry", "inquiry", "sales", "care", "support", "admin", "office")
+PREFERRED_PREFIX = ("info", "contact", "hello", "enquiry", "inquiry", "sales", "care", "support", "admin", "office",
+                    "reception", "appointments", "booking", "reservations")
 
 
 def _decode_cf(enc: str) -> str:
@@ -910,41 +948,77 @@ def verify_email(email: str) -> tuple:
 # ─────────────────────────────────────────────
 BANNED = re.compile(r"guarantee|100%|best price|cheapest|act now|limited time|\bfree\b|\bofferr?\b|[$₹€£]\s?\d", re.I)
 
+HOOKS = {
+    "after_hours": [
+        "When a {customer} wants to {call_for} after {name} has closed, who picks up the phone?",
+        "What happens to the call from a {customer} who wants to {call_for} once {name} has shut for the day?",
+        "If a {customer} rings {name} at 8 pm to {call_for}, does anyone answer?",
+    ],
+    "no_site": [
+        "When a new {customer} finds {name} on Google Maps and wants to {call_for}, the phone is their only option. What happens when you can't pick up?",
+        "A {customer} who finds {name} on Google Maps has one way to {call_for}: call. What happens when the line is busy?",
+        "Is every call to {name} from a {customer} who wants to {call_for} getting answered?",
+    ],
+    "busy": [
+        "{name} clearly gets plenty of calls. What happens to the ones that arrive while your team is busy with someone else?",
+        "With that many people finding {name}, how many {customer}s ring to {call_for} and get no answer?",
+        "When two {customer}s call {name} at the same moment to {call_for}, who gets the second call?",
+    ],
+    "no_chat": [
+        "What happens when a {customer} calls {name} to {call_for} and everyone is busy?",
+        "If a {customer} can't reach {name} by phone to {call_for}, do they try again or call the next business on the list?",
+        "How many calls from {customer}s who want to {call_for} does {name} miss in a typical week?",
+    ],
+    "general": [
+        "What happens when a {customer} calls {name} to {call_for} and nobody can answer?",
+        "If a {customer} can't get through to {name} to {call_for}, do they call back?",
+        "How many calls from {customer}s who want to {call_for} does {name} miss in a typical week?",
+    ],
+}
+SUBJECTS = {
+    "after_hours": ["Who answers {name} after hours?", "Calls after closing at {name}", "{name}: after-hours calls"],
+    "no_site": ["Calls to {name}", "{name} on Google Maps", "When {name} can't pick up"],
+    "busy": ["Busy phone line at {name}?", "Missed calls at {name}", "{name}: calls while you're busy"],
+    "no_chat": ["Missed calls at {name}?", "When {name} can't pick up", "A question about {name}'s phone"],
+    "general": ["Missed calls at {name}?", "A question about {name}'s phone", "When {name} can't pick up"],
+}
+ASKS = [
+    "Would you like me to set up a short demo call so you can hear it handle a typical request from a {customer}?",
+    "Want me to arrange a 2-minute demo where you can hear it take a call like a {customer} would make?",
+    "Would it help if I set up a quick demo so you can hear how it handles a {customer}'s call?",
+]
 
-def write_email(biz: dict, issues: list, website: str) -> Optional[dict]:
-    no_site = issues[0]["key"] == "no_website"
-    findings = "\n".join(f"{i+1}. {x['detail']}" for i, x in enumerate(issues[:3]))
-    facts = ""
-    if biz.get("rating") and (biz.get("reviews") or 0) >= 10:
-        facts = (f"\nFACT FROM GOOGLE MAPS (optional, mention at most once, numbers exactly as given): "
-                 f"rated {biz['rating']} from {biz['reviews']} reviews.\n")
-    if no_site:
-        opening = ("- Sentence 1: say you found their business on Google Maps but it lists no website of its own, and what "
-                   "that costs them (people who search cannot see services or contact options).")
-        target = "their Google Maps listing (no website listed)"
-    else:
-        opening = ("- Sentence 1: say you looked at their website and name the MAIN problem (finding #1) in plain words, "
-                   "and what it costs them (lost enquiries, lower Google ranking, visitors leaving).")
-        target = f"website: {website}"
+
+def product_text(info: dict) -> str:
+    return PRODUCT_PITCH.replace("{does}", info["does"])
+
+
+def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
+    info = CATEGORIES[biz["category"]]
+    hook_hint = HOOKS[angle][0].format(name=biz["name"], customer=info["customer"], call_for=info["call_for"])
     prompt = f"""
-Write a short email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
-({biz['category']}, {biz['city']}, {biz.get('country', '')}, {target}).
+Write a short cold email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
+({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
-ABOUT US: {COMPANY_PITCH}
-DELIVERY TIME: {DELIVERY_DAYS}
+WHO WE ARE: {COMPANY_WHO}
+WHAT WE SELL: {product_text(info)}
+SETUP TIME: live in {DELIVERY_DAYS}
+THE ONLY FACT YOU MAY STATE ABOUT THEIR BUSINESS: {fact}
+HOOK IDEA (rephrase freely): {hook_hint}
 
-WHAT WE FOUND (the ONLY facts you may state about their business):
-{findings}
-{facts}
+STRUCTURE (plain text, 85 to 130 words, no markdown, no emojis, no links, no bullet points):
+1. Start with "Hi,". Then ONE short hooking question about missed calls that a {info['customer']} makes to {info['call_for']}.
+   Follow it with the fact above in one sentence.
+2. Two sentences: who we are, and what the AI call agent does for a business like theirs.
+3. One sentence: it can be live in {DELIVERY_DAYS}.
+4. End with ONE simple question offering a short demo call so they can hear it handle a typical call from a {info['customer']}.
+Do not write a signature or sign-off; it is added automatically.
+
 RULES:
-- Plain text, 50 to 90 words, no markdown, no emojis, no links, no bullet points.
-- Sound like one person writing to another, not like a marketing email. Start with "Hi,". Do not write a signature or sign-off; it is added automatically.
-{opening}
-- Optionally mention finding #2 in one short clause. Do not mention anything not in the list.
-- One sentence on who we are and what we would do, and that we can do it in {DELIVERY_DAYS}.
-- End with ONE simple question, for example whether they would like a short list of what you would change. Never use the word "free".
-- Do NOT invent clients, results, statistics, prices, awards or guarantees. No hype, no urgency tricks.
-- Subject: under 50 characters, plain and specific to their business, no "!", no ALL CAPS, not "quick question", no "offer".
+- Sound like one person writing to another, not like a marketing email. No hype, no urgency tricks.
+- Do NOT invent clients, results, statistics, prices, awards, languages or guarantees. Never claim we called them or tested their phone.
+- Never use the word "free".
+- Subject: under 45 characters, specific to their business, curiosity-driven but honest, no "!", no ALL CAPS, not "quick question", no "offer".
 
 Return ONLY JSON: {{"subject": "...", "body": "..."}}
 """
@@ -954,54 +1028,37 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
             continue
         subject, body = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
         words = len(body.split())
-        if (subject and 40 <= words <= 120 and not re.search(r"\[[^\]]+\]|\{[^}]+\}|https?://|www\.", body + subject)
+        if (subject and 70 <= words <= 150 and body.lower().startswith("hi")
+                and not re.search(r"\[[^\]]+\]|\{[^}]+\}|https?://|www\.", body + subject)
                 and not BANNED.search(body + " " + subject)):
             return {"subject": subject[:70], "body": body}
         log.warning(f"Rejected generated email (words={words}); retrying")
     return None
 
 
-def fallback_email(biz: dict, issues: list, website: str) -> dict:
+def fallback_email(biz: dict, angle: str, fact: str) -> dict:
     """Template used when Gemini is unavailable. Three wordings so the emails are not identical."""
-    main = ISSUE_PHRASES.get(issues[0]["key"], "there are a few fixable issues on the site")
-    no_site = issues[0]["key"] == "no_website"
-    extra = ""
-    if len(issues) > 1 and issues[1]["severity"] >= 2 and not no_site:
-        extra = f" I also noticed {ISSUE_PHRASES.get(issues[1]['key'], 'another fixable issue')}."
-    site = (website or "").replace("https://", "").replace("http://", "").rstrip("/")
+    info = CATEGORIES[biz["category"]]
     v = sum(ord(c) for c in biz["name"]) % 3
-    name = biz["name"]
-    if no_site:
-        intros = [f"I came across {name} on Google Maps and noticed that {main}.",
-                  f"I was looking at {name} on Google Maps. {main[0].upper() + main[1:]}.",
-                  f"{name} showed up when I searched Google Maps, but {main}."]
-        what = ["We build simple, fast websites with call and WhatsApp buttons", "We're a small web team that builds simple sites",
-                "We build fast, mobile-friendly websites for local businesses"]
-        ask = ["Would it help if I sent a quick idea of what your site could look like?",
-               "Want me to send a short outline of what I'd build?", "Would you like me to send a quick plan?"]
-        subjects = [f"{name} on Google", f"A website for {name}", f"About {name}'s online listing"]
-    else:
-        intros = [f"I was looking at {site} and noticed that {main}.{extra}",
-                  f"{site} caught my eye: {main}.{extra}",
-                  f"I had a look at {site}. One thing stood out: {main}.{extra}"]
-        what = ["We fix this kind of thing for local businesses", "We're a small web team that fixes exactly this",
-                "We handle fixes like this regularly"]
-        ask = ["Would it help if I sent a short list of what I'd change?", "Want me to send the short list of fixes?",
-               "Would you like a short list of what I'd fix?"]
-        subjects = [f"{name} website", f"About {site}", f"A note on {name}'s website"]
-    body = (f"Hi,\n\n{intros[v]} That can quietly cost a business enquiries.\n\n"
-            f"I'm with {COMPANY_NAME}. {what[v]}, usually within {DELIVERY_DAYS}. {ask[v]}")
-    return {"subject": subjects[v][:70], "body": body}
+    fmt = {"name": biz["name"], "customer": info["customer"], "call_for": info["call_for"]}
+    hook = HOOKS[angle][v].format(**fmt)
+    noticed = f" I noticed that {fact}." if angle != "general" else ""
+    body = (
+        f"Hi,\n\n{hook}{noticed}\n\n"
+        f"I'm {SENDER_NAME}. {COMPANY_WHO} {product_text(info)}\n\n"
+        f"It can be live in {DELIVERY_DAYS}. {ASKS[v].format(**fmt)}"
+    )
+    return {"subject": SUBJECTS[angle][v].format(name=biz["name"])[:70], "body": body}
 
 
-def signature(country: str = "", followup: bool = False) -> str:
-    """Minimal signature: no links in a first email. The postal address is added for US recipients (CAN-SPAM)."""
+def signature(country: str = "") -> str:
+    """Signature with company details. The postal address is added when set (required for US recipients)."""
     lines = ["", "Regards,", SENDER_NAME, COMPANY_NAME]
     if COMPANY_PHONE:
         lines.append(f"WhatsApp / call: {COMPANY_PHONE}")
-    if followup and COMPANY_SITE:
+    if COMPANY_SITE:
         lines.append(COMPANY_SITE)
-    if COMPANY_ADDRESS and country == "United States":
+    if COMPANY_ADDRESS:
         lines.append(COMPANY_ADDRESS)
     lines += ["", "If this isn't relevant, just reply \"no\" and I won't write again."]
     return "\n".join(lines)
@@ -1017,6 +1074,7 @@ def send_email(to_email: str, subject: str, body: str, in_reply_to: Optional[str
     msg["Subject"] = subject
     msg["Reply-To"] = EMAIL_USER or FROM_EMAIL
     msg["Date"] = formatdate(localtime=True)
+    msg["List-Unsubscribe"] = f"<mailto:{EMAIL_USER or FROM_EMAIL}?subject=unsubscribe>"
     mid = make_msgid(domain=FROM_EMAIL.split("@")[-1])
     msg["Message-ID"] = mid
     if in_reply_to:
@@ -1042,11 +1100,35 @@ def send_email(to_email: str, subject: str, body: str, in_reply_to: Optional[str
 
 
 # ─────────────────────────────────────────────
-# INBOX SYNC (replies, bounces) + FOLLOW-UPS
+# INBOX SYNC (replies, bounces, opt-outs) + FOLLOW-UPS
 # ─────────────────────────────────────────────
+OPTOUT_RE = re.compile(
+    r"\b(unsubscribe|remove me|take me off|stop (?:emailing|sending|contacting|writing)|"
+    r"do not (?:email|contact|write)|don'?t (?:email|contact|write)|not interested|no,? thanks?|no thank you)\b"
+    r"|^\s*no\W*$", re.I | re.M)
+
+
+def _reply_text(raw: bytes) -> str:
+    """The new text of a reply (quoted history removed), first 800 characters."""
+    msg = message_from_bytes(raw)
+    text = ""
+    for part in (msg.walk() if msg.is_multipart() else [msg]):
+        if part.get_content_type() == "text/plain":
+            payload = part.get_payload(decode=True)
+            if payload:
+                text = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+                break
+    lines = []
+    for ln in text.splitlines():
+        if ln.startswith(">") or re.match(r"\s*On .+wrote:", ln):
+            break
+        lines.append(ln)
+    return "\n".join(lines)[:800]
+
+
 def inbox_signals(targets: list) -> Optional[tuple]:
-    """targets: [(email, since_datetime)] -> (replied, bounced) or None if the inbox can't be read."""
-    replied, bounced = set(), set()
+    """targets: [(email, since_datetime)] -> (replied, bounced, optouts) or None if the inbox can't be read."""
+    replied, bounced, optouts = set(), set(), set()
     try:
         m = imaplib.IMAP4_SSL("imap.gmail.com", timeout=30)
         m.login(EMAIL_USER, EMAIL_PASS)
@@ -1058,18 +1140,28 @@ def inbox_signals(targets: list) -> Optional[tuple]:
             typ, data = m.search(None, f'(FROM "{who}" SINCE {s})')
             if typ == "OK" and data and data[0] and data[0].split():
                 replied.add(email)
+                try:
+                    typ2, msgdata = m.fetch(data[0].split()[-1], "(BODY.PEEK[])")
+                    if typ2 == "OK" and msgdata and isinstance(msgdata[0], tuple) \
+                            and OPTOUT_RE.search(_reply_text(msgdata[0][1])):
+                        optouts.add(email)
+                except Exception as e:  # noqa: BLE001
+                    log.warning(f"Could not read reply body from {email}: {e}")
             typ, data = m.search(None, f'(OR FROM "mailer-daemon" FROM "postmaster" SINCE {s} TEXT "{email}")')
             if typ == "OK" and data and data[0] and data[0].split():
                 bounced.add(email)
         m.logout()
-        return replied, bounced
+        return replied, bounced, optouts
     except Exception as e:  # noqa: BLE001
         log.warning(f"Could not read inbox via IMAP ({e})")
         return None
 
 
+BASE_KEYS = ("business", "city", "website", "domain", "email", "main_issue", "country", "category", "score")
+
+
 def sync_inbox() -> Optional[dict]:
-    """Record replies and bounces for recent sends. Returns stats, or None if the inbox could not be read."""
+    """Record replies, bounces and opt-outs for recent sends. Returns stats, or None if the inbox could not be read."""
     rows, now = load_rows(), datetime.now(timezone.utc)
     by_domain = {}
     for r in rows:
@@ -1085,7 +1177,7 @@ def sync_inbox() -> Optional[dict]:
         statuses = {r.get("status") for r in rs}
         if "bounced" in statuses:
             bounced_n += 1
-        elif "replied" in statuses:
+        elif statuses & {"replied", "optout"}:
             replied_n += 1
         else:
             pending.append((first, sent_at, (first.get("email") or "").lower()))
@@ -1094,12 +1186,17 @@ def sync_inbox() -> Optional[dict]:
         signals = inbox_signals([(e, t) for _, t, e in pending if e])
         if signals is None:
             return None
-        replied, bounced = signals
+        replied, bounced, optouts = signals
         for first, _, email in pending:
-            base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue", "country")}
+            base = {k: first.get(k, "") for k in BASE_KEYS}
             if email in bounced:
                 record({**base, "status": "bounced"})
                 bounced_n += 1
+            elif email in optouts:
+                log.info(f"🚫 OPT-OUT from {email} ({first.get('business')}): added to suppression list")
+                record({**base, "status": "optout"})
+                add_suppression(email)
+                replied_n += 1
             elif email in replied:
                 log.info(f"💬 REPLY from {email} ({first.get('business')}), answer it!")
                 record({**base, "status": "replied"})
@@ -1114,14 +1211,15 @@ def sync_inbox() -> Optional[dict]:
 
 
 def followup_body(row: dict) -> str:
-    phrase = ISSUE_PHRASES.get(row.get("main_issue", ""), "there are a few fixable issues on the site")
-    target = (row.get("website") or "").replace("https://", "").replace("http://", "").rstrip("/") \
-        or row.get("business") or "your business"
+    info = CATEGORIES.get(row.get("category", ""))
+    name = row.get("business") or "your business"
+    does = info["does"] if info else "books appointments and answers common questions"
+    who = info["customer"] if info else "customer"
     return (
         "Hi,\n\n"
-        f"Just following up on my note from a few days ago about {target}. "
-        f"The main thing I noticed: {phrase}.\n\n"
-        f"If it's useful, I can send a short list of fixes. If you'd like us to handle it, it takes about {DELIVERY_DAYS}.\n"
+        f"Following up on my note about the phone calls at {name}. In one line: we set up an AI agent that answers "
+        f"every call day and night, {does}, and sends you a summary, live in {DELIVERY_DAYS}.\n\n"
+        f"If you're curious, I can arrange a short demo so you can hear it handle a typical call from a {who}.\n"
     )
 
 
@@ -1134,11 +1232,14 @@ def run_followups(suppressed: set, limit: int) -> int:
         by_domain.setdefault(r.get("domain", ""), []).append(r)
     for dom, rs in by_domain.items():
         statuses = {r.get("status") for r in rs}
-        if "sent" not in statuses or statuses & {"followup_sent", "replied", "bounced"}:
+        if "sent" not in statuses or statuses & {"followup_sent", "replied", "bounced", "optout"}:
             continue
         first = next(r for r in rs if r.get("status") == "sent")
+        if first.get("main_issue") not in HOOKS:      # sent by an older version of this bot (different pitch)
+            continue
         sent_at, email = parse_dt(first.get("date")), (first.get("email") or "").lower()
         if sent_at and email and email not in suppressed and dom not in suppressed \
+                and email.split("@")[-1] not in suppressed \
                 and FOLLOWUP_AFTER_DAYS <= (now - sent_at).days <= FOLLOWUP_MAX_AGE_DAYS:
             due.append((first, email))
 
@@ -1146,9 +1247,9 @@ def run_followups(suppressed: set, limit: int) -> int:
     for first, email in due:
         if sent >= limit or time.time() - START_TS > MAX_RUNTIME_S:
             break
-        base = {k: first.get(k, "") for k in ("business", "city", "website", "domain", "email", "main_issue", "country")}
-        subject = "Re: " + (first.get("subject") or "your website")
-        body = followup_body(first) + "\n" + signature(first.get("country", ""), followup=True)
+        base = {k: first.get(k, "") for k in BASE_KEYS}
+        subject = "Re: " + (first.get("subject") or "your phone calls")
+        body = followup_body(first) + "\n" + signature(first.get("country", ""))
         print(f"\n--- FOLLOW-UP to {email} ---\n{body}")
         mid = send_email(email, subject, body, in_reply_to=first.get("message_id") or None)
         if mid:
@@ -1168,96 +1269,83 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     """True if an email was sent (or drafted in dry-run). Handles businesses with AND without a website."""
     host, key = biz["host"], biz["key"]
     base = {"business": biz["name"], "city": biz["city"], "website": f"https://{host}" if host else "", "domain": key,
-            "country": biz.get("country", "")}
+            "country": biz.get("country", ""), "category": biz["category"]}
 
-    r = None
+    r, site = None, "none"
     if host:
         if host in suppressed or not is_public_host(host):
             log.info(f"⏭️  Skipping {host} (suppressed or non-public)")
             return False
-        r, elapsed, notes = fetch_site(host)
+        r = fetch_site(host)
+        site = "ok" if r is not None else "unknown"
         if r is None:
-            log.info(f"⏭️  {host}: unreachable from our server")
-            record({**base, "status": "unreachable"})
-            return False
-        issues = audit_site(r, elapsed, notes)
-    else:   # Google Maps lists no website of its own: a perfect lead for a web developer
-        issues = [{"severity": 3, "key": "no_website", "detail": "Google Maps lists no website of its own for this business"}]
-
-    if not issues:
-        log.info(f"⏭️  {key}: no issues found")
-        record({**base, "status": "no_issue"})
-        return False
-    if not worth_emailing(issues):
-        log.info(f"⏭️  {key}: only minor issues ({issues[0]['key']}), not worth an email")
-        record({**base, "main_issue": issues[0]["key"], "status": "weak"})
-        return False
-    main_issue = issues[0]["key"]
-    log.info(f"🔬 {key}: {len(issues)} issue(s), main = {main_issue}")
+            log.info(f"ℹ️  {host}: website not reachable from our server (scoring without website data)")
+    sig = site_signals(r) if r is not None else {}
 
     phone = (site_phone(r.text) if r is not None else "") or biz.get("phone") or ""
+    if not phone:
+        log.info(f"⏭️  {key}: no phone number, a call agent has nothing to answer")
+        record({**base, "status": "no_phone"})
+        return False
+
+    hrs = parse_hours(biz.get("hours"))
+    score, angle, fact = score_lead(biz, site, sig, hrs)
+    if score < SCORE_MIN:
+        log.info(f"⏭️  {key}: fit score {score} < {SCORE_MIN}, they probably don't need a call agent")
+        record({**base, "main_issue": angle, "score": score, "status": "low_fit"})
+        return False
+    log.info(f"🎯 {key}: fit score {score}, angle = {angle}")
+
     email = pick_api_email(biz.get("api_emails"), biz["city"], host)
     if not email and r is not None:
         email = find_public_email(host, r)
-    add_call_lead(biz, base["website"] or key, phone, email, issues)      # even when we have no email
+    add_call_lead(biz, base["website"] or key, phone, email, angle, score, fact)      # even when we have no email
 
     if not email:
-        log.info(f"⏭️  {key}: no usable email (call list entry saved: {bool(phone)})")
-        record({**base, "main_issue": main_issue, "status": "no_email"})
+        log.info(f"⏭️  {key}: no usable email (call list entry saved)")
+        record({**base, "main_issue": angle, "score": score, "status": "no_email"})
         return False
-    if email in suppressed or email.split("@")[-1] in suppressed:
+    dom = email.split("@")[-1]
+    if email in suppressed or dom in suppressed:
+        return False
+    if biz.get("country") in STRICT_COUNTRIES and dom in FREE_MAIL:
+        log.info(f"⏭️  {key}: private address ({email}) in {biz.get('country')}, not allowed without consent")
+        record({**base, "email": email, "main_issue": angle, "score": score, "status": "no_email"})
         return False
     if email in _seen_emails:
-        record({**base, "email": email, "main_issue": main_issue, "status": "dup_email"})
+        record({**base, "email": email, "main_issue": angle, "score": score, "status": "dup_email"})
         return False
 
     ok, reason = verify_email(email)
     if not ok:
         log.info(f"⏭️  {key}: {email} failed verification ({reason})")
-        record({**base, "email": email, "main_issue": main_issue, "status": "bad_email"})
+        record({**base, "email": email, "main_issue": angle, "score": score, "status": "bad_email"})
         return False
 
-    target = r.url if r is not None else ""
-    mail = write_email(biz, issues, target) or fallback_email(biz, issues, target)
+    mail = write_email(biz, angle, fact) or fallback_email(biz, angle, fact)
     body = mail["body"] + "\n" + signature(biz.get("country", ""))
 
     print("\n" + "=" * 60)
-    print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {target or 'no website'}  [{biz.get('source', '')}]")
-    print(f"📧 {email}   📌 {mail['subject']}")
-    print(f"🔬 Findings: {[i['detail'] for i in issues[:3]]}")
+    print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {base['website'] or 'no website'}  [{biz.get('source', '')}]")
+    print(f"📧 {email}   📌 {mail['subject']}   🎯 score {score} / {angle}")
+    print(f"🔬 Fact used: {fact}")
     print(body)
     print("=" * 60)
 
     if DRY_RUN:
-        record({**base, "email": email, "subject": mail["subject"], "main_issue": main_issue, "status": "dry_run"})
+        record({**base, "email": email, "subject": mail["subject"], "main_issue": angle, "score": score,
+                "status": "dry_run"})
         return True
 
     mid = send_email(email, mail["subject"], body)
     if mid:
         _seen_emails.add(email)
-        record({**base, "email": email, "subject": mail["subject"], "main_issue": main_issue,
+        record({**base, "email": email, "subject": mail["subject"], "main_issue": angle, "score": score,
                 "status": "sent", "message_id": mid})
         return True
-    record({**base, "email": email, "subject": mail["subject"], "main_issue": main_issue, "status": "send_failed"})
+    record({**base, "email": email, "subject": mail["subject"], "main_issue": angle, "score": score,
+            "status": "send_failed"})
     return False
-
-
-# ─────────────────────────────────────────────
-# FREE REPORT for leads who reply "yes"
-# ─────────────────────────────────────────────
-def make_report(site: str) -> str:
-    host = host_of(site)
-    r, elapsed, notes = fetch_site(host)
-    if r is None:
-        return f"Could not load {host} from this machine."
-    issues = audit_site(r, elapsed, notes)
-    lines = [f"WEBSITE REPORT: {host}", "=" * 40, ""]
-    if not issues:
-        lines.append("No major technical issues found. Nice work.")
-    for i, it in enumerate(issues, 1):
-        lines += [f"{i}. {it['detail']}", f"   Fix: {FIXES.get(it['key'], 'We will review and fix this.')}", ""]
-    lines.append(f"We can implement these fixes in {DELIVERY_DAYS}.  {COMPANY_NAME}  {COMPANY_PHONE}  {COMPANY_SITE}")
-    return "\n".join(lines)
 
 
 # ─────────────────────────────────────────────
@@ -1267,11 +1355,12 @@ def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reaso
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not path:
         return
-    lines = ["## Outreach run summary", "", "| | |", "|---|---|",
+    lines = ["## AI call agent outreach: run summary", "", "| | |", "|---|---|",
              f"| Result | **{reason}** |",
              f"| New emails {'drafted' if DRY_RUN else 'sent'} | {done} |",
              f"| Follow-ups sent | {followups} |",
              f"| Daily cap (warm-up aware) | {cap} (slots left at start: {remaining}) |",
+             f"| Minimum fit score | {SCORE_MIN} |",
              f"| City/category searches picked | {n_combos} |",
              f"| RapidAPI calls today | {usage.get('calls', 0)} |"]
     if stats:
@@ -1292,7 +1381,8 @@ def main() -> None:
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
-    log.info(f"🚀 Himalaya IT Outreach Engine v6 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | hours_only={BUSINESS_HOURS_ONLY}")
+    log.info(f"🚀 Himalaya IT AI Call Agent Outreach v7 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | "
+             f"min_score={SCORE_MIN} | hours_only={BUSINESS_HOURS_ONLY}")
     if not RAPIDAPI_KEY:
         log.warning("RAPIDAPI_KEY not set: using free OpenStreetMap discovery only")
     if not COMPANY_ADDRESS:
@@ -1319,6 +1409,7 @@ def main() -> None:
             if paused:
                 log.error(f"🛑 PAUSED: bounce rate {stats['bounce_rate']:.0%} ({stats['bounced']}/{stats['recent_sent']}) is above "
                           f"{BOUNCE_PAUSE_RATE:.0%}. No new emails until it recovers. Override: FORCE_RESUME=true")
+            suppressed = load_suppressed()            # opt-outs found during the sync apply immediately
             followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
 
     remaining = eff_limit - (0 if DRY_RUN else count_today(rows, "sent"))
@@ -1357,7 +1448,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3 and sys.argv[1] == "--report":
-        print(make_report(sys.argv[2]))
-    else:
-        main()
+    main()
