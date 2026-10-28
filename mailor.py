@@ -104,13 +104,19 @@ COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
 COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", f"{COMPANY_NAME} is a 25-member software team based in Greater Noida, India.")
-# {does} is replaced with what the agent does for that kind of business (books appointments, takes reservations ...)
-PRODUCT_PITCH = _env(
-    "PRODUCT_PITCH",
-    "We build AI call agents: the agent answers your business phone 24/7, talks to callers naturally, {does}, "
-    "answers common questions such as hours, prices and location, and sends you a short summary of every call.",
-)
+COMPANY_WHO = _env("COMPANY_WHO", "We're a 25-person software team in Greater Noida, India.")
+# The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
+DEMO_PHONE = _env("DEMO_PHONE")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
+PROOF_LINE = _env("PROOF_LINE")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
+PRICE_LINE = _env("PRICE_LINE")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
+# What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
+# "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
+PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
+    "answers every call, day and night",
+    "talks to callers naturally instead of reading out a menu",
+    "answers common questions such as hours, prices and location",
+    "sends you a short summary of every call",
+]
 
 MODEL = _env("GEMINI_MODEL", "gemini-2.5-flash")        # change here if Google renames/retires it
 LOG_CSV = "sent_log.csv"
@@ -257,12 +263,12 @@ def gemini() -> genai.Client:
     return _client
 
 
-def gemini_call(prompt: str, json_mode: bool = False, retries: int = 2) -> str:
+def gemini_call(prompt: str, json_mode: bool = False, retries: int = 2, temperature: float = 0.7) -> str:
     """Plain Gemini text call. After 2 failed calls it is switched off for the run (template email is used)."""
     global _gemini_failures
     if not GEMINI_API_KEY or _gemini_failures >= 2:
         return ""
-    cfg = {"temperature": 0.7}
+    cfg = {"temperature": temperature}
     if json_mode:
         cfg["response_mime_type"] = "application/json"
     for attempt in range(1, retries + 1):
@@ -795,10 +801,10 @@ def parse_hours(wh) -> dict:
 
 def hours_fact(hrs: dict) -> str:
     if hrs["closed_days"]:
-        return f"your Google listing shows you're closed on {' and '.join(hrs['closed_days'][:2])}"
+        return f"Your Google listing shows you're closed on {' and '.join(hrs['closed_days'][:2])}."
     if hrs["early_close"] and hrs["typical_close"]:
         h12 = int(hrs["typical_close"] + 0.5) % 12 or 12
-        return f"your Google listing shows you usually close by around {h12} PM"
+        return f"Your Google listing shows you usually close by around {h12} PM."
     return ""
 
 
@@ -811,8 +817,7 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
 
     if site == "none":
         pts += 3
-        facts["no_site"] = (f"Google Maps lists no website for {biz['name']}, "
-                            "so the phone is the main way new customers reach you")
+        facts["no_site"] = f"I couldn't find a website for {display_name(biz['name']) or 'your business'} on Google Maps."
     elif site == "ok":
         if not sig.get("chat"):
             pts += 2
@@ -821,10 +826,9 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
         if sig.get("tel") and not sig.get("form"):
             pts += 1
         if not sig.get("chat") and not sig.get("booking"):
-            facts["no_chat"] = ("your website has no live chat or online booking, "
-                                "so a phone call is the main way a visitor reaches you")
+            facts["no_chat"] = "I couldn't find online booking or live chat on your website."
         elif not sig.get("chat"):
-            facts["no_chat"] = "your website has no live chat, so a phone call is the main way a visitor reaches you"
+            facts["no_chat"] = "I couldn't find live chat on your website."
 
     hf = hours_fact(hrs)
     if hf:
@@ -835,12 +839,12 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
     elif reviews >= 30:
         pts += 1
     if reviews >= 30:
-        facts["busy"] = f"you have {reviews} Google reviews, so plenty of people are clearly finding you"
+        facts["busy"] = f"With {reviews} Google reviews, plenty of people clearly find you."
 
     for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
         if angle in facts:
             return pts, angle, facts[angle]
-    return pts, "general", "your business depends on customers being able to reach you by phone"
+    return pts, "general", ""
 
 
 # ─────────────────────────────────────────────
@@ -944,115 +948,321 @@ def verify_email(email: str) -> tuple:
 
 
 # ─────────────────────────────────────────────
-# EMAIL WRITING
+# EMAIL WRITING  (every email is unique + spam-checked before it is sent)
 # ─────────────────────────────────────────────
-BANNED = re.compile(r"guarantee|100%|best price|cheapest|act now|limited time|\bfree\b|\bofferr?\b|[$₹€£]\s?\d", re.I)
+# Words/phrases that spam filters (and people) associate with bulk marketing. Any email containing one is rejected.
+SPAM_RE = re.compile(
+    r"guarantee|100\s?%|best price|cheapest|act now|limited time|\bfree\b|\boffers?\b|discount|click here|buy now|"
+    r"risk[- ]free|no obligation|winner|congratulations|urgent|\bcash\b|\bearn\b|income|make money|promotion|"
+    r"dear (?:sir|madam|friend)|once in a lifetime|don'?t miss|exclusive|\bsale\b|special deal|[$₹€£]\s?\d|!|"
+    r"\bcheap\b|\bbonus\b|\bprize\b|unsubscribe now|this is not spam|\bsir\b|\bmadam\b|outreach", re.I)
 
 HOOKS = {
     "after_hours": [
-        "When a {customer} wants to {call_for} after {name} has closed, who picks up the phone?",
-        "What happens to the call from a {customer} who wants to {call_for} once {name} has shut for the day?",
-        "If a {customer} rings {name} at 8 pm to {call_for}, does anyone answer?",
+        "When a {customer} wants to {call_for} after you've closed, who picks up the phone?",
+        "What happens to the call from a {customer} who wants to {call_for} once you've shut for the day?",
+        "If a {customer} rings at 8 pm to {call_for}, does anyone answer?",
+        "A {customer} who wants to {call_for} usually calls when they're free, often after hours. Who answers?",
     ],
     "no_site": [
-        "When a new {customer} finds {name} on Google Maps and wants to {call_for}, the phone is their only option. What happens when you can't pick up?",
-        "A {customer} who finds {name} on Google Maps has one way to {call_for}: call. What happens when the line is busy?",
-        "Is every call to {name} from a {customer} who wants to {call_for} getting answered?",
+        "When a new {customer} finds you on Google Maps and wants to {call_for}, the phone is their only option. What happens when you can't pick up?",
+        "A {customer} who finds you on Google Maps has one way to {call_for}: call. What happens when the line is busy?",
+        "Is every call from a {customer} who wants to {call_for} getting answered?",
+        "For someone who wants to {call_for}, you're one phone call away. What if nobody answers?",
     ],
     "busy": [
-        "{name} clearly gets plenty of calls. What happens to the ones that arrive while your team is busy with someone else?",
-        "With that many people finding {name}, how many {customer}s ring to {call_for} and get no answer?",
-        "When two {customer}s call {name} at the same moment to {call_for}, who gets the second call?",
+        "You clearly get plenty of calls. What happens to the ones that arrive while your team is with someone else?",
+        "How many {customer}s ring to {call_for} and get no answer at peak times?",
+        "When two {customer}s call at the same moment to {call_for}, who gets the second call?",
+        "A busy business means a busy phone. How many calls go unanswered at peak times?",
     ],
     "no_chat": [
-        "What happens when a {customer} calls {name} to {call_for} and everyone is busy?",
-        "If a {customer} can't reach {name} by phone to {call_for}, do they try again or call the next business on the list?",
-        "How many calls from {customer}s who want to {call_for} does {name} miss in a typical week?",
+        "What happens when a {customer} calls to {call_for} and everyone is busy?",
+        "If a {customer} can't reach you to {call_for}, they usually call the next business on the list. How often does that happen?",
+        "How many calls from {customer}s who want to {call_for} do you miss in a typical week?",
+        "A {customer} who decides to {call_for} usually calls once. What if nobody picks up?",
     ],
     "general": [
-        "What happens when a {customer} calls {name} to {call_for} and nobody can answer?",
-        "If a {customer} can't get through to {name} to {call_for}, do they call back?",
-        "How many calls from {customer}s who want to {call_for} does {name} miss in a typical week?",
+        "What happens when a {customer} calls to {call_for} and nobody can answer?",
+        "If a {customer} can't get through to {call_for}, do they call back or try someone else?",
+        "How many calls from {customer}s who want to {call_for} do you miss in a typical week?",
+        "Who answers the phone when the whole team is busy?",
     ],
 }
+WHO_VARIANTS = [                    # used only when COMPANY_WHO is not set; keeps the intro from being identical every time
+    "We're a 25-person software team in Greater Noida, India.",
+    "We're a small software team in Greater Noida, India.",
+    "Our team of 25 builds software from Greater Noida, India.",
+]
+INTROS = [
+    "I'm {sender} from {company}. {who}",
+    "My name is {sender}, from {company}. {who}",
+    "{sender} here, from {company}. {who}",
+]
+FEATURE_SENTENCES = [
+    "We build an AI receptionist for the phone. It {a}.",
+    "Our AI receptionist {a}.",
+    "What we make is an AI receptionist that {a}.",
+    "We make an AI phone receptionist that {a}.",
+]
+# The #1 reason small-business owners ignore this kind of email: "it will replace my staff / annoy my callers".
+POSITIONING = [
+    "It's meant for the calls your team can't get to, not to replace anyone.",
+    "It covers lunch breaks, busy moments and after hours; your team handles everything else.",
+    "It only steps in when your team can't pick up.",
+    "Your staff stay in charge; it just makes sure no call goes unanswered.",
+]
+TIMINGS = [
+    "Setup takes {d}.",
+    "",
+    "",
+    "",
+]
+CTA_DEMO = [      # used when DEMO_PHONE is set: the prospect can hear it in a minute, no meeting needed
+    "Easiest way to judge it: call {demo} and talk to it like a {customer} who wants to {call_for}. It takes a minute.",
+    "You can hear it yourself. Call {demo} and pretend to be a {customer} who wants to {call_for}.",
+    "Call {demo} and try it as a {customer} would. If it sounds right, just reply and I'll set one up.",
+]
+CTA_REPLY = [     # used when DEMO_PHONE is not set
+    "Want to hear it? Reply \"yes\" and I'll set up a 2-minute demo where you play the {customer}.",
+    "Reply \"demo\" and I'll arrange a short call so you can hear how it handles a {customer}.",
+    "Curious how it sounds? Reply \"yes\" and I'll arrange a short demo.",
+]
 SUBJECTS = {
-    "after_hours": ["Who answers {name} after hours?", "Calls after closing at {name}", "{name}: after-hours calls"],
-    "no_site": ["Calls to {name}", "{name} on Google Maps", "When {name} can't pick up"],
-    "busy": ["Busy phone line at {name}?", "Missed calls at {name}", "{name}: calls while you're busy"],
-    "no_chat": ["Missed calls at {name}?", "When {name} can't pick up", "A question about {name}'s phone"],
-    "general": ["Missed calls at {name}?", "A question about {name}'s phone", "When {name} can't pick up"],
+    "after_hours": ["Who answers {name} after hours?", "Calls after closing at {name}", "{name}: after-hours calls",
+                    "When {name} is closed", "Phone at {name} after hours"],
+    "no_site": ["Calls to {name}", "{name} on Google Maps", "When {name} can't pick up", "Reaching {name} by phone",
+                "A question about {name}'s phone line"],
+    "busy": ["Busy phone line at {name}?", "Missed calls at {name}", "{name}: calls while you're busy",
+             "Second caller at {name}", "Peak-time calls at {name}"],
+    "no_chat": ["Missed calls at {name}?", "When {name} can't pick up", "A question about {name}'s phone",
+                "Who answers at {name}?", "Calls to {name} when busy"],
+    "general": ["Missed calls at {name}?", "A question about {name}'s phone", "When {name} can't pick up",
+                "Who answers at {name}?", "Phone calls at {name}"],
 }
-ASKS = [
-    "Would you like me to set up a short demo call so you can hear it handle a typical request from a {customer}?",
-    "Want me to arrange a 2-minute demo where you can hear it take a call like a {customer} would make?",
-    "Would it help if I set up a quick demo so you can hear how it handles a {customer}'s call?",
+# Style directives given to Gemini (one random one per email) so no two emails share the same shape.
+STYLES = [
+    "Open directly with the question. Short sentences. Warm and plain.",
+    "Open with one sentence about what you noticed, then ask the question. Slightly more conversational.",
+    "Open with a tiny scenario (one sentence) of a caller who gets no answer, then ask how often that happens.",
+    "Open with the question, then explain in a relaxed, matter-of-fact tone.",
+    "Write like a quick note from one local professional to another. Use contractions. Keep it humble.",
 ]
 
+_recent: list = []        # recently written emails [{"subject":..., "body":...}] used to guarantee uniqueness
+RECENT_FILE = "recent_emails.json"
+RECENT_KEEP = 40
+SIM_MAX = float(_env("SIM_MAX", "0.40"))     # max allowed overlap (word 3-grams) with any recent email
 
-def product_text(info: dict) -> str:
-    return PRODUCT_PITCH.replace("{does}", info["does"])
+
+def display_name(name: str) -> str:
+    """Business name as a person would write it: no ALL CAPS, no mixed-script clutter. '' if it cannot be used."""
+    n = re.sub(r"\s+", " ", (name or "").strip())
+    latin = " ".join(w for w in n.split() if w.isascii())     # 'DEEP GUEST HOUSE दीप गेस्ट हाउस' -> 'DEEP GUEST HOUSE'
+    n = latin if len(latin) >= 3 else n
+    n = re.sub(r"[\s|\-–—:,&]+$", "", n)
+    if not n.isascii() or len(n) < 3:
+        return ""
+    if n.isupper():
+        n = n.title()
+    if len(n) > 42:
+        n = n[:42].rsplit(" ", 1)[0]
+    return n
+
+
+def greeting(nm: str) -> str:
+    return f"Hi {nm} team," if nm else "Hi there,"
+
+
+def load_recent() -> list:
+    try:
+        with open(RECENT_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def remember_email(subject: str, core: str) -> None:
+    _recent.append({"subject": subject, "body": core})
+    del _recent[:-RECENT_KEEP]
+    if DRY_RUN:
+        return
+    try:
+        with open(RECENT_FILE, "w", encoding="utf-8") as f:
+            json.dump(_recent, f)
+    except OSError:
+        pass
+
+
+def _shingles(text: str) -> set:
+    w = re.findall(r"[a-z']+", text.lower())
+    return {" ".join(w[i:i + 3]) for i in range(max(0, len(w) - 2))}
+
+
+def max_similarity(core: str) -> float:
+    a = _shingles(core)
+    best = 0.0
+    for r in _recent:
+        b = _shingles(r.get("body", ""))
+        if a and b:
+            best = max(best, len(a & b) / len(a | b))
+    return best
+
+
+def spam_problems(subject: str, body: str) -> list:
+    """Local pre-send spam check. Returns a list of problems (empty = clean)."""
+    out = []
+    text = subject + " " + body
+    for line in (PRICE_LINE, PROOF_LINE):            # lines YOU wrote (price, proof) are allowed to contain numbers/currency
+        if line:
+            text = text.replace(line, " ")
+    m = SPAM_RE.search(text)
+    if m:
+        out.append(f"spammy wording '{m.group()}'")
+    if re.search(r"https?://|www\.|\b[a-z0-9-]+\.(?:com|in|io|co|net|org|ly)\b", text, re.I):
+        out.append("contains a link/domain")
+    if re.search(r"\[[^\]]+\]|\{[^}]+\}", text):
+        out.append("unfilled placeholder")
+    letters = [c for c in body if c.isalpha()]
+    if letters and sum(c.isupper() for c in letters) / len(letters) > 0.12:
+        out.append("too many capitals")
+    if any(w.isupper() and len(w) > 3 for w in subject.split()):
+        out.append("ALL-CAPS word in subject")
+    if len(subject) > 60 or len(subject) < 8:
+        out.append("subject length")
+    if subject.lower().startswith(("re:", "fwd:", "fw:")):
+        out.append("fake reply subject")
+    if body.count("?") > 3:
+        out.append("too many question marks")
+    plain = body
+    for line in (PRICE_LINE, PROOF_LINE):
+        if line:
+            plain = plain.replace(line, " ")
+    words = len(plain.split())
+    if not 45 <= words <= 115:
+        out.append(f"length {words} words")
+    if re.search(r"([.?,])\1", body):
+        out.append("repeated punctuation")
+    return out
+
+
+def pick_features(info: dict) -> list:
+    """What the agent does for THIS kind of business + one random general ability, in random order."""
+    chosen = [info["does"]] + random.sample(PRODUCT_FEATURES, k=min(1, len(PRODUCT_FEATURES)))
+    random.shuffle(chosen)
+    return chosen
+
+
+def closing_block(nm: str, info: dict) -> str:
+    """Proof, price and the call to action. Written by CODE from YOUR settings, never invented by the AI."""
+    fmt = {"customer": info["customer"], "call_for": info["call_for"], "name": nm or "your business",
+           "demo": DEMO_PHONE}
+    parts = [x for x in (PROOF_LINE, PRICE_LINE) if x]
+    parts.append(random.choice(CTA_DEMO if DEMO_PHONE else CTA_REPLY).format(**fmt))
+    return "\n\n".join(parts)
+
+
+def assemble(biz: dict, core: str) -> str:
+    nm = display_name(biz["name"])
+    return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
 
 
 def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
+    """Gemini writes the opening and the pitch fresh for every business. Rejected if spammy or too similar to a recent email."""
     info = CATEGORIES[biz["category"]]
-    hook_hint = HOOKS[angle][0].format(name=biz["name"], customer=info["customer"], call_for=info["call_for"])
-    prompt = f"""
-Write a short cold email from {SENDER_NAME} at {COMPANY_NAME} to the owner of "{biz['name']}"
+    nm = display_name(biz["name"]) or "your business"
+    hook_hint = random.choice(HOOKS[angle]).format(name=nm, customer=info["customer"], call_for=info["call_for"])
+    a, b = pick_features(info)
+    avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
+    fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
+    for attempt in range(3):
+        prompt = f"""
+Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the owner of "{nm}"
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
-WHO WE ARE: {COMPANY_WHO}
-WHAT WE SELL: {product_text(info)}
-SETUP TIME: live in {DELIVERY_DAYS}
-THE ONLY FACT YOU MAY STATE ABOUT THEIR BUSINESS: {fact}
-HOOK IDEA (rephrase freely): {hook_hint}
+The greeting, the call to action and the signature are added automatically: do NOT write them.
+Write exactly two short paragraphs, 45 to 80 words in total, plain text, no markdown, no emojis, no links.
 
-STRUCTURE (plain text, 85 to 130 words, no markdown, no emojis, no links, no bullet points):
-1. Start with "Hi,". Then ONE short hooking question about missed calls that a {info['customer']} makes to {info['call_for']}.
-   Follow it with the fact above in one sentence.
-2. Two sentences: who we are, and what the AI call agent does for a business like theirs.
-3. One sentence: it can be live in {DELIVERY_DAYS}.
-4. End with ONE simple question offering a short demo call so they can hear it handle a typical call from a {info['customer']}.
-Do not write a signature or sign-off; it is added automatically.
+PARAGRAPH 1: {fact_rule}
+  Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
+  Hook idea (rephrase in your own words): {hook_hint}
+  Do not repeat the business name more than once in the whole text (the greeting already uses it).
+PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
+  then say you build an AI receptionist for the phone: it {a} and {b}.
+  Make clear it is meant for the calls the team cannot get to and does not replace anyone.
+STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
-- Sound like one person writing to another, not like a marketing email. No hype, no urgency tricks.
-- Do NOT invent clients, results, statistics, prices, awards, languages or guarantees. Never claim we called them or tested their phone.
-- Never use the word "free".
-- Subject: under 45 characters, specific to their business, curiosity-driven but honest, no "!", no ALL CAPS, not "quick question", no "offer".
+- Sound like one real person writing to another. No hype, no urgency tricks, no exclamation marks.
+- Always call it "an AI receptionist" (or "AI phone assistant"), never just "the agent".
+- Do NOT invent clients, results, statistics, prices, awards, languages, integrations or guarantees. Never claim we called them or tested their phone.
+- Never use the words: free, offer, discount, guarantee, urgent, sale, outreach.
+- Do not reuse the wording of these recent emails (use different sentence openings and structure):
+{avoid}
+- Subject: 20 to 50 characters, specific to their business, curious but honest, no "!", no ALL CAPS, not "quick question".
 
 Return ONLY JSON: {{"subject": "...", "body": "..."}}
 """
-    for _ in range(2):
-        data = parse_json(gemini_call(prompt, json_mode=True))
+        data = parse_json(gemini_call(prompt, json_mode=True, temperature=0.95))
         if not data:
             continue
-        subject, body = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
-        words = len(body.split())
-        if (subject and 70 <= words <= 150 and body.lower().startswith("hi")
-                and not re.search(r"\[[^\]]+\]|\{[^}]+\}|https?://|www\.", body + subject)
-                and not BANNED.search(body + " " + subject)):
-            return {"subject": subject[:70], "body": body}
-        log.warning(f"Rejected generated email (words={words}); retrying")
+        subject, core = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
+        body = assemble(biz, core)
+        problems = spam_problems(subject, body)
+        if re.match(r"\s*(hi|hello|dear)\b", core, re.I):
+            problems.append("greeting must not be written by the AI")
+        if not 35 <= len(core.split()) <= 95:
+            problems.append(f"core length {len(core.split())} words")
+        sim = max_similarity(core)
+        if sim >= SIM_MAX:
+            problems.append(f"too similar to a recent email ({sim:.0%})")
+        if subject.lower() in {r["subject"].lower() for r in _recent}:
+            problems.append("subject already used")
+        if not problems:
+            return {"subject": subject, "core": core, "body": body, "source": "gemini"}
+        log.warning(f"Rejected generated email (attempt {attempt + 1}): {'; '.join(problems)}")
     return None
 
 
-def fallback_email(biz: dict, angle: str, fact: str) -> dict:
-    """Template used when Gemini is unavailable. Three wordings so the emails are not identical."""
+def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
+    """Template email built from many interchangeable parts. Thousands of different combinations."""
     info = CATEGORIES[biz["category"]]
-    v = sum(ord(c) for c in biz["name"]) % 3
-    fmt = {"name": biz["name"], "customer": info["customer"], "call_for": info["call_for"]}
-    hook = HOOKS[angle][v].format(**fmt)
-    noticed = f" I noticed that {fact}." if angle != "general" else ""
-    body = (
-        f"Hi,\n\n{hook}{noticed}\n\n"
-        f"I'm {SENDER_NAME}. {COMPANY_WHO} {product_text(info)}\n\n"
-        f"It can be live in {DELIVERY_DAYS}. {ASKS[v].format(**fmt)}"
-    )
-    return {"subject": SUBJECTS[angle][v].format(name=biz["name"])[:70], "body": body}
+    nm = display_name(biz["name"]) or "your business"
+    fmt = {"name": nm, "customer": info["customer"], "call_for": info["call_for"]}
+    hook = random.choice(HOOKS[angle]).format(**fmt)
+    p1 = f"{fact} {hook}".strip() if fact else hook
+    who = COMPANY_WHO if _env("COMPANY_WHO") else random.choice(WHO_VARIANTS)
+    intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
+    a, b = pick_features(info)
+    feats = random.choice(FEATURE_SENTENCES).format(a=a)
+    if random.random() < 0.5:
+        feats += f" It also {b}."
+    timing = random.choice(TIMINGS).format(d=DELIVERY_DAYS)
+    p2 = " ".join(x for x in (intro, feats, random.choice(POSITIONING), timing) if x)
+    core = f"{p1}\n\n{p2}"
+    subject = random.choice(SUBJECTS[angle]).format(name=nm)
+    return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
 
 
-def signature(country: str = "") -> str:
-    """Signature with company details. The postal address is added when set (required for US recipients)."""
+def fallback_email(biz: dict, angle: str, fact: str) -> dict:
+    """Used when Gemini is unavailable or keeps failing. Still unique and spam-checked."""
+    best, best_sim = None, 9.0
+    used = {r["subject"].lower() for r in _recent}
+    for _ in range(12):
+        mail = compose_fallback(biz, angle, fact)
+        if spam_problems(mail["subject"], mail["body"]):
+            continue
+        sim = max_similarity(mail["core"]) + (0.5 if mail["subject"].lower() in used else 0.0)
+        if sim < best_sim:
+            best, best_sim = mail, sim
+        if sim < SIM_MAX:
+            break
+    return best or compose_fallback(biz, angle, fact)
+
+
+def signature(country: str = "", followup: bool = False) -> str:
+    """Plain signature. The website is included so the owner can check who you are before replying."""
     lines = ["", "Regards,", SENDER_NAME, COMPANY_NAME]
     if COMPANY_PHONE:
         lines.append(f"WhatsApp / call: {COMPANY_PHONE}")
@@ -1060,8 +1270,39 @@ def signature(country: str = "") -> str:
         lines.append(COMPANY_SITE)
     if COMPANY_ADDRESS:
         lines.append(COMPANY_ADDRESS)
-    lines += ["", "If this isn't relevant, just reply \"no\" and I won't write again."]
+    lines += ["", "If this isn't for you, reply \"no\" and I won't write again (or pass it to whoever handles your phones)."]
     return "\n".join(lines)
+
+
+def check_sender_auth() -> None:
+    """Warn early if the sending domain lacks SPF / DMARC. This matters far more for inbox placement than wording."""
+    dom = FROM_EMAIL.split("@")[-1].lower() if "@" in (FROM_EMAIL or "") else ""
+    if not dom:
+        return
+    if dom in FREE_MAIL:
+        log.info(f"ℹ️  Sending from a free mailbox ({dom}). Fine for low volume; a dedicated domain with "
+                 "SPF/DKIM/DMARC gives better inbox placement.")
+        return
+    try:
+        res = dns.resolver.Resolver()
+        res.lifetime = 8
+
+        def txt(name: str) -> list:
+            try:
+                return [b"".join(r.strings).decode("utf-8", "ignore") for r in res.resolve(name, "TXT")]
+            except Exception:  # noqa: BLE001
+                return []
+
+        if not any(t.lower().startswith("v=spf1") for t in txt(dom)):
+            log.warning(f"⚠️  No SPF record found for {dom}: emails are much more likely to land in spam. Add one.")
+        if not any(t.lower().startswith("v=dmarc1") for t in txt("_dmarc." + dom)):
+            log.warning(f"⚠️  No DMARC record found for _dmarc.{dom}: Gmail/Yahoo expect one. Add at least p=none.")
+        log.info("ℹ️  DKIM cannot be checked automatically: make sure your email provider signs outgoing mail with DKIM.")
+        if SMTP_HOST == "smtp.gmail.com" and not SMTP_USER.lower().endswith(("@gmail.com", "@googlemail.com")) \
+                and SMTP_USER.split("@")[-1].lower() != dom:
+            log.warning("⚠️  FROM_EMAIL domain differs from the Gmail SMTP login: SPF/DKIM will not align.")
+    except Exception as e:  # noqa: BLE001
+        log.warning(f"Sender authentication check skipped: {e}")
 
 
 # ─────────────────────────────────────────────
@@ -1212,14 +1453,17 @@ def sync_inbox() -> Optional[dict]:
 
 def followup_body(row: dict) -> str:
     info = CATEGORIES.get(row.get("category", ""))
-    name = row.get("business") or "your business"
+    nm = display_name(row.get("business") or "")
     does = info["does"] if info else "books appointments and answers common questions"
     who = info["customer"] if info else "customer"
+    call_for = info["call_for"] if info else "book an appointment"
+    ask = (f"You can hear it in a minute: call {DEMO_PHONE} and talk to it like a {who} who wants to {call_for}."
+           if DEMO_PHONE else f"If you'd like to hear it, reply \"yes\" and I'll set up a short demo.")
     return (
-        "Hi,\n\n"
-        f"Following up on my note about the phone calls at {name}. In one line: we set up an AI agent that answers "
-        f"every call day and night, {does}, and sends you a summary, live in {DELIVERY_DAYS}.\n\n"
-        f"If you're curious, I can arrange a short demo so you can hear it handle a typical call from a {who}.\n"
+        f"{greeting(nm)}\n\n"
+        "In case my earlier note got buried: I make an AI receptionist for the phone. It picks up the calls your team "
+        f"can't get to and {does}.\n\n"
+        f"{ask}\n"
     )
 
 
@@ -1249,7 +1493,7 @@ def run_followups(suppressed: set, limit: int) -> int:
             break
         base = {k: first.get(k, "") for k in BASE_KEYS}
         subject = "Re: " + (first.get("subject") or "your phone calls")
-        body = followup_body(first) + "\n" + signature(first.get("country", ""))
+        body = followup_body(first) + "\n" + signature(first.get("country", ""), followup=True)
         print(f"\n--- FOLLOW-UP to {email} ---\n{body}")
         mid = send_email(email, subject, body, in_reply_to=first.get("message_id") or None)
         if mid:
@@ -1327,12 +1571,13 @@ def process_lead(biz: dict, suppressed: set) -> bool:
 
     print("\n" + "=" * 60)
     print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {base['website'] or 'no website'}  [{biz.get('source', '')}]")
-    print(f"📧 {email}   📌 {mail['subject']}   🎯 score {score} / {angle}")
+    print(f"📧 {email}   📌 {mail['subject']}   🎯 score {score} / {angle}   ✍️ {mail.get('source', '')}")
     print(f"🔬 Fact used: {fact}")
     print(body)
     print("=" * 60)
 
     if DRY_RUN:
+        remember_email(mail["subject"], mail.get("core") or mail["body"])
         record({**base, "email": email, "subject": mail["subject"], "main_issue": angle, "score": score,
                 "status": "dry_run"})
         return True
@@ -1340,6 +1585,7 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     mid = send_email(email, mail["subject"], body)
     if mid:
         _seen_emails.add(email)
+        remember_email(mail["subject"], mail.get("core") or mail["body"])
         record({**base, "email": email, "subject": mail["subject"], "main_issue": angle, "score": score,
                 "status": "sent", "message_id": mid})
         return True
@@ -1389,9 +1635,16 @@ def main() -> None:
         log.warning("COMPANY_ADDRESS not set: United States leads are skipped (US law requires a postal address)")
     if not GEMINI_API_KEY:
         log.warning("GEMINI_API_KEY not set: using template emails")
+    if not DEMO_PHONE:
+        log.warning("DEMO_PHONE not set: emails will ask for a reply instead of letting owners call and hear the agent "
+                    "(much lower reply rate). Set it to a live demo number.")
+    if not PROOF_LINE:
+        log.warning("PROOF_LINE not set: emails carry no proof (client / pilot / result). Add one TRUE sentence.")
 
     ensure_log()
     ensure_call_log()
+    _recent.extend(load_recent())
+    check_sender_auth()
     rows = load_rows()
     seen, suppressed = load_seen(rows), load_suppressed()
     _seen_emails.update(load_seen_emails(rows))
