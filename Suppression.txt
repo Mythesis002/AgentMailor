@@ -1,0 +1,2 @@
+# One email address or domain per line. Anyone listed here is never emailed.
+# People who reply "no" / "unsubscribe" are added automatically by the bot.
