@@ -75,7 +75,11 @@ jobs:
           COMPANY_PHONE: ${{ vars.COMPANY_PHONE }}
           COMPANY_WEBSITE: ${{ vars.COMPANY_WEBSITE }}
           COMPANY_WHO: ${{ vars.COMPANY_WHO }}
-          PRODUCT_PITCH: ${{ vars.PRODUCT_PITCH }}
+          PRODUCT_FEATURES: ${{ vars.PRODUCT_FEATURES }}
+          # The three biggest reply-rate boosters (write TRUE lines only):
+          DEMO_PHONE: ${{ vars.DEMO_PHONE }}      # number owners can call to hear the AI receptionist
+          PROOF_LINE: ${{ vars.PROOF_LINE }}      # e.g. It already answers calls for 6 clinics in Delhi.
+          PRICE_LINE: ${{ vars.PRICE_LINE }}      # e.g. Plans start at Rs 2,999 a month.
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
 
@@ -84,7 +88,7 @@ jobs:
         run: |
           git config user.name "himalaya-bot"
           git config user.email "himalaya-bot@users.noreply.github.com"
-          for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json suppression.txt; do
+          for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json suppression.txt recent_emails.json; do
             if [ -f "$f" ]; then git add "$f"; fi
           done
           git diff --staged --quiet || (git commit -m "chore: update logs" && git pull --rebase --autostash && git push)
