@@ -1065,12 +1065,6 @@ CTA_SERVICE = {
         "Is improving your website or digital workflow on your radar this year?"
     ],
 }
-SUBJECTS.update({
-    "no_site": ["Website for {name}", "A website idea for {name}", "{name} online"],
-    "no_chat": ["A website idea for {name}", "Customer enquiries at {name}", "One idea for {name}"],
-    "no_booking": ["Online enquiries at {name}", "Booking flow for {name}", "One idea for {name}"],
-    "general": ["A digital idea for {name}", "Website and app development", "An idea for {name}"],
-})
 CTA_REPLY = [     # used when DEMO_PHONE is not set
     "Want to hear it? Reply \"yes\" and I'll set up a 2-minute demo where you play the {customer}.",
     "Reply \"demo\" and I'll arrange a short call so you can hear how it handles a {customer}.",
@@ -1088,6 +1082,12 @@ SUBJECTS = {
     "general": ["Missed calls at {name}?", "A question about {name}'s phone", "When {name} can't pick up",
                 "Who answers at {name}?", "Phone calls at {name}"],
 }
+SUBJECTS.update({
+    "no_site": ["Website for {name}", "A website idea for {name}", "{name} online"],
+    "no_chat": ["A website idea for {name}", "Customer enquiries at {name}", "One idea for {name}"],
+    "no_booking": ["Online enquiries at {name}", "Booking flow for {name}", "One idea for {name}"],
+    "general": ["A digital idea for {name}", "Website and app development", "An idea for {name}"],
+})
 # Style directives given to Gemini (one random one per email) so no two emails share the same shape.
 STYLES = [
     "Open directly with the question. Short sentences. Warm and plain.",
