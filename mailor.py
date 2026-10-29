@@ -1273,11 +1273,11 @@ def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
     fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
     for attempt in range(3):
         identity = (
-        f"I'm {SENDER_NAME}, an independent freelance developer. {COMPANY_WHO}"
-        if not COMPANY_NAME else
-        f"I'm {SENDER_NAME}, a freelance developer working under {COMPANY_NAME}. {COMPANY_WHO}"
-    )
-    prompt = f"""
+            f"I'm {SENDER_NAME}, an independent freelance developer. {COMPANY_WHO}"
+            if not COMPANY_NAME else
+            f"I'm {SENDER_NAME}, a freelance developer working under {COMPANY_NAME}. {COMPANY_WHO}"
+        )
+        prompt = f"""
 Write the BODY of a short cold email from {SENDER_NAME}, a freelance developer, to the owner of "{nm}"
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
