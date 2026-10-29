@@ -22,12 +22,15 @@ The email hook uses only a fact the bot actually measured (never invented).
 
 Repo **Secrets**: `EMAIL_USER`, `EMAIL_PASS` (Gmail app password), `GEMINI_API_KEY` (optional), `RAPIDAPI_KEY` (optional).
 Repo **Variables** (all optional, defaults in `mailor.py`): `COMPANY_ADDRESS` (required to email US businesses),
-`SENDER_NAME`, `COMPANY_NAME`, `COMPANY_PHONE`, `COMPANY_WEBSITE`, `COMPANY_WHO`, `PRODUCT_FEATURES` (pipe-separated list of what your agent really does), `SCORE_MIN`.
+`SENDER_NAME`, `COMPANY_NAME`, `COMPANY_PHONE`, `COMPANY_WEBSITE`, `COMPANY_WHO`, `SERVICE_OFFERINGS` (pipe-separated; e.g. business websites | custom web applications | mobile apps | AI-powered automation), `PRODUCT_FEATURES` (pipe-separated list of real AI receptionist capabilities), `SCORE_MIN`.
+
+Emails now select a primary service based on the measured lead signal: website development for businesses with no website, website/web-app improvements when booking or chat is missing, and AI phone receptionists when phone coverage is the relevant need. Website, web-app and mobile-app development are also described as broader capabilities.
 
 **Set these three Variables, they decide your reply rate** (the bot never invents them, so write only true lines):
 - `DEMO_PHONE`: a number owners can call to hear the AI receptionist answer. Then the email's call to action is "call this and try it" instead of "reply to book a meeting".
-- `PROOF_LINE`: one true sentence of proof, e.g. `It already answers calls for 6 clinics in Delhi.`
-- `PRICE_LINE`: one true sentence about price, e.g. `Plans start at Rs 2,999 a month.`
+- `PROOF_LINE`: optional, one verifiable sentence of proof. Leave unset if you do not have a real, approved proof point.
+- `PRICE_LINE`: optional, one accurate pricing statement. Leave unset if pricing is not finalized.
+- `DEMO_PHONE`: optional, a working number where prospects can actually try the AI receptionist.
 
 Test first: Actions > run workflow with `dry_run = true`. Drafts are printed in the log and nothing is sent.
 
