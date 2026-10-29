@@ -1,4 +1,4 @@
-name: Himalaya IT AI Call Agent Outreach
+name: AgentMailor Freelance Web & AI Outreach
 
 on:
   schedule:
@@ -87,8 +87,8 @@ jobs:
       - name: Save Logs (prevents emailing anyone twice)
         if: always()
         run: |
-          git config user.name "himalaya-bot"
-          git config user.email "himalaya-bot@users.noreply.github.com"
+          git config user.name "agentmailor-bot"
+          git config user.email "agentmailor-bot@users.noreply.github.com"
           for f in sent_log.csv call_list.csv call_list_old.csv api_usage.json suppression.txt recent_emails.json; do
             if [ -f "$f" ]; then git add "$f"; fi
           done
