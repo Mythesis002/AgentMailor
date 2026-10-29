@@ -75,6 +75,7 @@ jobs:
           COMPANY_PHONE: ${{ vars.COMPANY_PHONE }}
           COMPANY_WEBSITE: ${{ vars.COMPANY_WEBSITE }}
           COMPANY_WHO: ${{ vars.COMPANY_WHO }}
+          SERVICE_OFFERINGS: ${{ vars.SERVICE_OFFERINGS }}
           PRODUCT_FEATURES: ${{ vars.PRODUCT_FEATURES }}
           # The three biggest reply-rate boosters (write TRUE lines only):
           DEMO_PHONE: ${{ vars.DEMO_PHONE }}      # number owners can call to hear the AI receptionist
