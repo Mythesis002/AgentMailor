@@ -1,7 +1,6 @@
-# AgentMailor: AI Call Agent Outreach Engine
+# AgentMailor: Freelance Web & AI Outreach
 
-Finds local businesses that lose customers to missed phone calls, scores how much they need an AI call agent,
-and emails only the good fits with a short, honest, personalised pitch (who we are, what the agent does, a demo offer).
+Finds business leads through Google Maps data (RapidAPI) with OpenStreetMap as a fallback, evaluates visible signals, and drafts a relevant email from an independent freelance developer. It can pitch website development, custom web applications, mobile apps, or AI call agents based on the available evidence. It must not claim to be an agency or team unless that identity is accurate and explicitly configured.
 
 ## How it picks businesses (fit score, minimum `SCORE_MIN`, default 6)
 
@@ -24,7 +23,7 @@ Repo **Secrets**: `EMAIL_USER`, `EMAIL_PASS` (Gmail app password), `GEMINI_API_K
 Repo **Variables** (all optional, defaults in `mailor.py`): `COMPANY_ADDRESS` (required to email US businesses),
 `SENDER_NAME`, `COMPANY_NAME`, `COMPANY_PHONE`, `COMPANY_WEBSITE`, `COMPANY_WHO`, `SERVICE_OFFERINGS` (pipe-separated; e.g. business websites | custom web applications | mobile apps | AI-powered automation), `PRODUCT_FEATURES` (pipe-separated list of real AI receptionist capabilities), `SCORE_MIN`.
 
-Emails now select a primary service based on the measured lead signal: website development for businesses with no website, website/web-app improvements when booking or chat is missing, and AI phone receptionists when phone coverage is the relevant need. Website, web-app and mobile-app development are also described as broader capabilities.
+Emails select a primary service based on the measured lead signal: website development for businesses with no website, website/web-app improvements when booking or chat appears missing, and AI call agents when phone coverage is the relevant need. The default sender identity is an independent freelance developer. Google Maps sourcing language is included only when the lead source is recorded as RapidAPI/Google Maps; OpenStreetMap leads are not described as Google Maps leads. These are signals, not proof that a business wants to buy.
 
 **Set these three Variables, they decide your reply rate** (the bot never invents them, so write only true lines):
 - `DEMO_PHONE`: a number owners can call to hear the AI receptionist answer. Then the email's call to action is "call this and try it" instead of "reply to book a meeting".
@@ -32,7 +31,7 @@ Emails now select a primary service based on the measured lead signal: website d
 - `PRICE_LINE`: optional, one accurate pricing statement. Leave unset if pricing is not finalized.
 - `DEMO_PHONE`: optional, a working number where prospects can actually try the AI receptionist.
 
-Test first: Actions > run workflow with `dry_run = true`. Drafts are printed in the log and nothing is sent.
+Test first: Actions > run workflow with `dry_run = true`. Drafts are printed in the log and nothing is sent. Review several examples for factual accuracy, correct sender identity, correct source attribution, service relevance, and valid line breaks before using live sending.
 
 ## Safety features
 - Warm-up: 3 emails/day, then 5, 8, then `DAILY_LIMIT`.
