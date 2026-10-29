@@ -100,9 +100,9 @@ SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
-COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
-COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
+COMPANY_PHONE = _env("COMPANY_PHONE")
+COMPANY_SITE = _env("COMPANY_WEBSITE")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS")   # required to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 COMPANY_WHO = _env("COMPANY_WHO", "We build business websites, custom web applications, mobile apps, and AI-powered automation.")
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
