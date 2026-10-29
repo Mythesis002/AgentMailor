@@ -845,9 +845,17 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
     if reviews >= 30:
         facts["busy"] = f"With {reviews} Google reviews, plenty of people clearly find you."
 
-    for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
-        if angle in facts:
-            return pts, angle, facts[angle]
+    # Match the email to the strongest observed business need, not always to phone automation.
+    if "no_site" in facts:
+        return pts, "no_site", facts["no_site"]
+    if "after_hours" in facts:
+        return pts, "after_hours", facts["after_hours"]
+    if "no_chat" in facts and site == "ok" and not sig.get("form"):
+        return pts, "no_chat", facts["no_chat"]
+    if site == "ok" and not sig.get("booking"):
+        return pts, "no_booking", "I couldn't find an obvious online booking or enquiry flow on your website."
+    if "busy" in facts:
+        return pts, "busy", facts["busy"]
     return pts, "general", ""
 
 
@@ -1027,6 +1035,34 @@ CTA_DEMO = [      # used when DEMO_PHONE is set: the prospect can hear it in a m
     "You can hear it yourself. Call {demo} and pretend to be a {customer} who wants to {call_for}.",
     "Call {demo} and try it as a {customer} would. If it sounds right, just reply and I'll set one up.",
 ]
+CTA_SERVICE = {
+    "no_site": [
+        "Would it be useful if I sent two website ideas tailored to your business?",
+        "Open to seeing a couple of practical website ideas for your business?",
+        "Would you be the right person to ask about improving your website presence?"
+    ],
+    "no_chat": [
+        "Would it help if I sent one or two ideas to make customer enquiries easier?",
+        "Open to a couple of practical ideas for improving the enquiry flow?",
+        "Would you like me to send a short example of how this could work?"
+    ],
+    "no_booking": [
+        "Would it be useful to see a simple example of how online enquiries or booking could work?",
+        "Is improving online enquiries something you're considering this year?",
+        "Would you be open to one practical idea for making enquiries easier?"
+    ],
+    "general": [
+        "Are you the right person to speak with about your website or digital tools?",
+        "Would it be useful if I sent one relevant idea based on your business?",
+        "Is improving your website or digital workflow on your radar this year?"
+    ],
+}
+SUBJECTS.update({
+    "no_site": ["Website for {name}", "A website idea for {name}", "{name} online"],
+    "no_chat": ["A website idea for {name}", "Customer enquiries at {name}", "One idea for {name}"],
+    "no_booking": ["Online enquiries at {name}", "Booking flow for {name}", "One idea for {name}"],
+    "general": ["A digital idea for {name}", "Website and app development", "An idea for {name}"],
+})
 CTA_REPLY = [     # used when DEMO_PHONE is not set
     "Want to hear it? Reply \"yes\" and I'll set up a 2-minute demo where you play the {customer}.",
     "Reply \"demo\" and I'll arrange a short call so you can hear how it handles a {customer}.",
@@ -1158,18 +1194,21 @@ def pick_features(info: dict) -> list:
     return chosen
 
 
-def closing_block(nm: str, info: dict) -> str:
+def closing_block(nm: str, info: dict, angle: str = "general") -> str:
     """Proof, price and the call to action. Written by CODE from YOUR settings, never invented by the AI."""
     fmt = {"customer": info["customer"], "call_for": info["call_for"], "name": nm or "your business",
            "demo": DEMO_PHONE}
     parts = [x for x in (PROOF_LINE, PRICE_LINE) if x]
-    parts.append(random.choice(CTA_DEMO if DEMO_PHONE else CTA_REPLY).format(**fmt))
+    if angle in ("no_site", "no_chat", "no_booking", "general"):
+        parts.append(random.choice(CTA_SERVICE.get(angle, CTA_SERVICE["general"])))
+    else:
+        parts.append(random.choice(CTA_DEMO if DEMO_PHONE else CTA_REPLY).format(**fmt))
     return "\n\n".join(parts)
 
 
-def assemble(biz: dict, core: str) -> str:
+def assemble(biz: dict, core: str, angle: str = "general") -> str:
     nm = display_name(biz["name"])
-    return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
+    return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']], angle)}"
 
 
 def service_pitch(angle: str) -> str:
@@ -1217,29 +1256,35 @@ Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
 The greeting, the call to action and the signature are added automatically: do NOT write them.
-Write exactly two short paragraphs, 45 to 80 words in total, plain text, no markdown, no emojis, no links.
+Write exactly two short paragraphs, 45 to 75 words in total, plain text, no markdown, no emojis, no links. Make it sound like a thoughtful founder wrote it after a quick look at the business, not like a mass campaign.
 
-PARAGRAPH 1: {fact_rule}
-  Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
-  Hook idea (rephrase in your own words): {hook_hint}
+PARAGRAPH 1: Start with the verified observation only: {fact_rule}
+  Do NOT invent a problem, imply the business is losing leads, or ask about missed phone calls unless the selected angle is "after_hours" or "busy".
+  For "no_site", frame the idea around making the business easier to discover and contact online.
+  For "no_chat" or "no_booking", frame it around making customer enquiries or appointment requests easier.
+  For "after_hours" or "busy", you may ask one practical question about handling calls.
+  For "general", use a relevant, non-assumptive opening.
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
 PARAGRAPH 2: Introduce the company using this accurate description: "I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"
   Primary service angle for this prospect, based on the measured evidence: {service_pitch(angle)}
   Available services: {SERVICE_OFFERINGS}
-  Explain the relevant service clearly. Missing website means prioritize website development; missing booking/chat means prioritize a website or web-app improvement; after-hours/busy phone evidence means prioritize the AI receptionist. Mention the wider website, web-app and mobile-app development capabilities naturally, but do not dump a long service list or claim every service is needed.
+  Pick ONE primary service only for this email. For "no_site", lead with website development. For "no_chat" or "no_booking", lead with website/web-app improvements. For "after_hours" or "busy", lead with the AI receptionist. For "general", choose a service only if available evidence supports it; otherwise ask a neutral qualification question. Mention other services only if they naturally fit, not as a laundry list.
   Describe AI receptionist features (such as {a} and {b}) only when the selected angle is "after_hours" or "busy". Do not imply the recipient has a problem that was not measured.
 STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
 - Sound like one real person writing to another. No hype, no urgency tricks, no exclamation marks.
 - When relevant to the evidence, call it "an AI receptionist" or "AI phone assistant"; do not force an AI receptionist pitch into every email.
-- Clearly communicate that we provide website development, web application development and mobile app development.
+- Do not list all services in every email. Sell one relevant service per email; the company website/signature can show the broader service range.
 - Keep the primary service tied to the observed business need; do not claim that a business has no website, booking system or chat unless the code actually measured that fact.
 - Do NOT invent clients, results, statistics, prices, awards, languages, integrations or guarantees. Never claim we called them or tested their phone.
+- Avoid sales clichés such as "I hope you're doing well", "just checking in", "game-changer", "transform your business", "boost growth", "unlock potential", or fake familiarity.
 - Never use the words: free, offer, discount, guarantee, urgent, sale, outreach.
 - Do not reuse the wording of these recent emails (use different sentence openings and structure):
 {avoid}
-- Subject: 20 to 50 characters, specific to their business, curious but honest, no "!", no ALL CAPS, not "quick question".
+- Subject: 15 to 45 characters, plain and specific to the service or observation; no fake "Re:", "quick question", "urgent", "!" or ALL CAPS.
+- CTA: ask for one small next step (permission to send an idea, a simple yes/no, or the right contact), not a forced meeting/demo.
+- Do not claim a custom audit, mockup, proposal, research, or result already exists unless supplied in the input.
 
 Return ONLY JSON: {{"subject": "...", "body": "..."}}
 """
@@ -1247,7 +1292,7 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
         if not data:
             continue
         subject, core = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
-        body = assemble(biz, core)
+        body = assemble(biz, core, angle)
         problems = spam_problems(subject, body)
         if re.match(r"\s*(hi|hello|dear)\b", core, re.I):
             problems.append("greeting must not be written by the AI")
@@ -1278,7 +1323,7 @@ def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
     p2 = " ".join(x for x in (intro, pitch, positioning) if x)
     core = f"{p1}\n\n{p2}"
     subject = random.choice(SUBJECTS[angle]).format(name=nm)
-    return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
+    return {"subject": subject[:55], "core": core, "body": assemble(biz, core, angle), "source": "template"}
 
 
 def fallback_email(biz: dict, angle: str, fact: str) -> dict:
@@ -1488,18 +1533,27 @@ def sync_inbox() -> Optional[dict]:
 
 
 def followup_body(row: dict) -> str:
-    info = CATEGORIES.get(row.get("category", ""))
+    """One concise, relevant follow-up; never switch a website lead into an AI receptionist pitch."""
+    angle = row.get("main_issue", "general")
     nm = display_name(row.get("business") or "")
-    does = info["does"] if info else "books appointments and answers common questions"
+    if angle in ("no_site", "no_chat", "no_booking", "general"):
+        messages = {
+            "no_site": "I reached out because a clear website can help people understand your services and contact you. I can send two ideas tailored to your business if useful.",
+            "no_chat": "I was thinking about how customers get from your website to making an enquiry. I can share one or two practical improvements if useful.",
+            "no_booking": "I reached out about making online enquiries or appointment requests simpler. Would an example of that flow be useful?",
+            "general": "We build websites, web apps and mobile apps for businesses. If improving any of those is on your roadmap, I can send a relevant example."
+        }
+        return f"{greeting(nm)}\\n\\n{messages.get(angle, messages['general'])}\\n\\nRegards,\\n{SENDER_NAME}"
+    info = CATEGORIES.get(row.get("category", ""))
+    does = info["does"] if info else "answers common questions"
     who = info["customer"] if info else "customer"
     call_for = info["call_for"] if info else "book an appointment"
     ask = (f"You can hear it in a minute: call {DEMO_PHONE} and talk to it like a {who} who wants to {call_for}."
-           if DEMO_PHONE else f"If you'd like to hear it, reply \"yes\" and I'll set up a short demo.")
+           if DEMO_PHONE else "Would a short demo be useful?")
     return (
-        f"{greeting(nm)}\n\n"
-        "In case my earlier note got buried: I make an AI receptionist for the phone. It picks up the calls your team "
-        f"can't get to and {does}.\n\n"
-        f"{ask}\n"
+        f"{greeting(nm)}\\n\\n"
+        "Following up on my earlier note about handling calls when your team is busy. "
+        f"The receptionist can {does}.\\n\\n{ask}\\n"
     )
 
 
@@ -1563,13 +1617,12 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     sig = site_signals(r) if r is not None else {}
 
     phone = (site_phone(r.text) if r is not None else "") or biz.get("phone") or ""
-    if not phone:
-        log.info(f"⏭️  {key}: no phone number, a call agent has nothing to answer")
-        record({**base, "status": "no_phone"})
-        return False
-
     hrs = parse_hours(biz.get("hours"))
     score, angle, fact = score_lead(biz, site, sig, hrs)
+    if angle in ("after_hours", "busy") and not phone:
+        log.info(f"⏭️  {key}: no phone number for a phone-agent pitch")
+        record({**base, "main_issue": angle, "score": score, "status": "no_phone"})
+        return False
     if score < SCORE_MIN:
         log.info(f"⏭️  {key}: fit score {score} < {SCORE_MIN}, they probably don't need a call agent")
         record({**base, "main_issue": angle, "score": score, "status": "low_fit"})
