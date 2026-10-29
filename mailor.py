@@ -1,9 +1,9 @@
 """
-Himalaya IT: AI Call Agent Outreach Engine v7
-(businesses worldwide, Google Maps data via RapidAPI)
+AgentMailor: Freelance Web & AI Outreach
+(businesses sourced from Google Maps data via RapidAPI, with OpenStreetMap fallback)
 
-We sell an AI call agent: it answers a business's phone 24/7, books appointments, answers common
-questions and sends the owner a summary of every call.
+An independent freelance developer offers relevant website, web-app, mobile-app and AI call-agent
+services based on evidence found for each business.
 
 Per run:
   0. Sync inbox: mark replies / bounces / opt-outs, pause sending if the bounce rate is too high
@@ -106,7 +106,7 @@ COMPANY_ADDRESS = _env("COMPANY_ADDRESS")   # required to email US businesses (C
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
 COMPANY_WHO = _env(
     "COMPANY_WHO",
-    "I'm an independent developer. I build websites and web apps, and I also develop AI call agents for businesses."
+    "I build websites and web apps, and I also develop AI call agents for businesses."
 )
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
 DEMO_PHONE = _env("DEMO_PHONE")          # optional: only include a demo number when it is configured and working
@@ -1219,7 +1219,7 @@ def assemble(biz: dict, core: str, angle: str = "general") -> str:
     nm = display_name(biz["name"])
     source = str(biz.get("source", "")).strip().lower().replace("_", " ")
     source_note = ""
-    if source in ("google maps", "google map", "maps"):
+    if source in ("google maps", "google map", "maps", "rapidapi"):
         source_note = (
             "I came across your business listing on Google Maps while researching local businesses."
         )
@@ -1229,34 +1229,34 @@ def assemble(biz: dict, core: str, angle: str = "general") -> str:
     parts.append(core)
     parts.append(closing_block(nm, CATEGORIES[biz['category']], angle))
     parts.append(signature(biz.get("country", "")))
-    return "\\n\\n".join(parts)
+    return "\n\n".join(parts)
 
 
 def service_pitch(angle: str) -> str:
     """Choose a truthful service angle from the observed business need, not a one-size-fits-all AI receptionist pitch."""
     pitches = {
         "no_site": (
-            "Our primary fit may be a professional, mobile-friendly website that clearly presents your services "
-            "and makes it easy for customers to contact you. We also build custom web applications and mobile apps."
+            "I could help with a professional, mobile-friendly website that clearly presents your services "
+            "and makes it easy for customers to contact you. I also build custom web applications and mobile apps."
         ),
         "no_chat": (
-            "We build and improve business websites and web apps, including useful enquiry flows and customer "
-            "communication features where they fit. We also develop mobile apps and AI-powered tools."
+            "I build and improve business websites and web apps, including useful enquiry flows and customer "
+            "communication features where they fit. I also develop mobile apps and AI-powered tools."
         ),
         "no_booking": (
-            "We build business websites and web apps that can make enquiries and appointment requests easier "
-            "to manage. We also develop mobile apps and custom software when a business needs them."
+            "I build business websites and web apps that can make enquiries and appointment requests easier "
+            "to manage. I also develop mobile apps and custom software when a business needs them."
         ),
         "after_hours": (
-            "We build AI phone receptionists to help handle calls when a team is busy or closed. We also develop "
+            "I develop AI phone receptionists to help handle calls when a team is busy or closed. I also build "
             "business websites, web apps, mobile apps and custom software."
         ),
         "busy": (
-            "We build AI phone receptionists to help handle calls when a team is busy or cannot pick up. We also "
-            "develop business websites, web apps, mobile apps and custom software."
+            "I develop AI phone receptionists to help handle calls when a team is busy or cannot pick up. I also "
+            "build business websites, web apps, mobile apps and custom software."
         ),
         "general": (
-            "We build business websites, custom web applications, mobile apps and AI-powered automation, "
+            "I build business websites, custom web applications, mobile apps and AI-powered automation, "
             "choosing the solution around the business's actual needs."
         ),
     }
@@ -1572,9 +1572,9 @@ def followup_body(row: dict) -> str:
             "no_site": "I reached out because a clear website can help people understand your services and contact you. I can send two ideas tailored to your business if useful.",
             "no_chat": "I was thinking about how customers get from your website to making an enquiry. I can share one or two practical improvements if useful.",
             "no_booking": "I reached out about making online enquiries or appointment requests simpler. Would an example of that flow be useful?",
-            "general": "We build websites, web apps and mobile apps for businesses. If improving any of those is on your roadmap, I can send a relevant example."
+            "general": "I build websites, web apps and mobile apps for businesses. If improving any of those is on your roadmap, I can send a relevant example."
         }
-        return f"{greeting(nm)}\\n\\n{messages.get(angle, messages['general'])}\\n\\nRegards,\\n{SENDER_NAME}"
+        return f"{greeting(nm)}\n\n{messages.get(angle, messages['general'])}\n\n{signature(row.get('country', ''))}"
     info = CATEGORIES.get(row.get("category", ""))
     does = info["does"] if info else "answers common questions"
     who = info["customer"] if info else "customer"
@@ -1582,9 +1582,9 @@ def followup_body(row: dict) -> str:
     ask = (f"You can hear it in a minute: call {DEMO_PHONE} and talk to it like a {who} who wants to {call_for}."
            if DEMO_PHONE else "Would a short demo be useful?")
     return (
-        f"{greeting(nm)}\\n\\n"
+        f"{greeting(nm)}\n\n"
         "Following up on my earlier note about handling calls when your team is busy. "
-        f"The receptionist can {does}.\\n\\n{ask}\\n"
+        f"The AI call agent I develop can {does}.\n\n{ask}\n\n{signature(row.get('country', ''))}"
     )
 
 
@@ -1747,7 +1747,7 @@ def main() -> None:
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
-    log.info(f"🚀 Himalaya IT AI Call Agent Outreach v7 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | "
+    log.info(f"🚀 Freelance Web & AI Outreach | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | "
              f"min_score={SCORE_MIN} | hours_only={BUSINESS_HOURS_ONLY}")
     if not RAPIDAPI_KEY:
         log.warning("RAPIDAPI_KEY not set: using free OpenStreetMap discovery only")
