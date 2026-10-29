@@ -138,7 +138,9 @@ BLOCKING_STATUSES = {"sent", "no_email", "low_fit", "no_phone", "bad_email", "du
 START_TS = time.time()
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; HimalayaITBot/4.0)",
+    # Identify the client and explicitly accept the JSON response Overpass returns.
+    "User-Agent": "AgentMailor/1.0 (business discovery; https://github.com/Mythesis002/AgentMailor)",
+    "Accept": "application/json",
     "Accept-Language": "en;q=0.9,*;q=0.5",
 }
 
@@ -493,7 +495,7 @@ def overpass_query(lat: float, lon: float, tags: list) -> str:
     parts = "".join(
         f'nwr["{k}"="{v}"][~"^(contact:)?(website|phone)$"~"."](around:{SEARCH_RADIUS_M},{lat},{lon});' for k, v in tags
     )
-    return f"[out:json][timeout:90];({parts});out tags 200;"
+    return f"[out:json][timeout:35];({parts});out tags 200;"
 
 
 def discover(city: tuple, category: str) -> list:
@@ -501,19 +503,17 @@ def discover(city: tuple, category: str) -> list:
     log.info(f"🔎 Discovering (OpenStreetMap): {category} in {name_}, {country}")
     time.sleep(2)                                   # be polite to the free public servers
     query, data = overpass_query(lat, lon, CATEGORIES[category]["osm"]), None
-    for attempt in range(3):
-        for url in OVERPASS_URLS:
-            try:
-                resp = requests.post(url, data={"data": query}, headers=HEADERS, timeout=120)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    break
-                log.warning(f"   Overpass {url} returned {resp.status_code}")
-            except (requests.RequestException, ValueError) as e:
-                log.warning(f"   Overpass {url} failed: {e}")
-        if data is not None:
-            break
-        time.sleep(15 * (attempt + 1))
+    # Public Overpass instances are shared infrastructure. Keep fallback bounded:
+    # try each mirror once with a short timeout rather than spending many minutes per lead search.
+    for url in OVERPASS_URLS:
+        try:
+            resp = requests.post(url, data={"data": query}, headers=HEADERS, timeout=(8, 35))
+            if resp.status_code == 200:
+                data = resp.json()
+                break
+            log.warning(f"   Overpass {url} returned {resp.status_code}; trying next mirror")
+        except (requests.RequestException, ValueError) as e:
+            log.warning(f"   Overpass {url} failed: {e}; trying next mirror")
 
     elements = (data or {}).get("elements", [])
     random.Random(f"{date.today()}-{name_}-{category}").shuffle(elements)
@@ -596,8 +596,12 @@ def rapid_search(query: str, lat: float, lng: float, region: str, limit: int, of
     remaining = resp.headers.get("x-ratelimit-requests-remaining")
     if remaining is not None:
         log.info(f"   RapidAPI requests remaining this period: {remaining}")
-    if resp.status_code in (401, 403, 429):
-        log.error(f"   RapidAPI returned {resp.status_code} (invalid key / not subscribed / quota used up): using OpenStreetMap instead")
+    if resp.status_code in (401, 403):
+        log.error(f"   RapidAPI returned {resp.status_code} (key rejected or API subscription/permission issue): using OpenStreetMap instead")
+        _rapid_dead = True
+        return None
+    if resp.status_code == 429:
+        log.error("   RapidAPI returned 429 (rate limit or provider quota/subscription limit); check the RapidAPI dashboard and subscription for this API. Using OpenStreetMap instead")
         _rapid_dead = True
         return None
     if resp.status_code != 200:
