@@ -1,9 +1,9 @@
 """
-AgentMailor: Freelance Web & AI Outreach
-(businesses sourced from Google Maps data via RapidAPI, with OpenStreetMap fallback)
+Himalaya IT: AI Call Agent Outreach Engine v7
+(businesses worldwide, Google Maps data via RapidAPI)
 
-An independent freelance developer offers relevant website, web-app, mobile-app and AI call-agent
-services based on evidence found for each business.
+We sell an AI call agent: it answers a business's phone 24/7, books appointments, answers common
+questions and sends the owner a summary of every call.
 
 Per run:
   0. Sync inbox: mark replies / bounces / opt-outs, pause sending if the bounce rate is too high
@@ -99,23 +99,16 @@ WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly
 SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
-COMPANY_NAME = _env("COMPANY_NAME", "")  # optional; leave blank for transparent freelancer outreach
-COMPANY_PHONE = _env("COMPANY_PHONE")
-COMPANY_SITE = _env("COMPANY_WEBSITE")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS")   # required to email US businesses (CAN-SPAM)
+COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
+COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
+COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env(
-    "COMPANY_WHO",
-    "I build websites and web apps, and I also develop AI call agents for businesses."
-)
+COMPANY_WHO = _env("COMPANY_WHO", "We're a  software Agency in Greater Noida, India.")
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
-DEMO_PHONE = _env("DEMO_PHONE")          # optional: only include a demo number when it is configured and working
-PROOF_LINE = _env("PROOF_LINE")            # optional: set only to a verifiable, accurate proof point
-PRICE_LINE = _env("PRICE_LINE")            # optional: set only to a real, approved pricing statement
-SERVICE_OFFERINGS = _env(
-    "SERVICE_OFFERINGS",
-    "business websites | custom web applications | mobile apps | AI-powered automation and voice agents",
-)
+DEMO_PHONE = _env("+91 6392449432")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
+PROOF_LINE = _env("It already answers calls for 6 clinics in Los Angeles.")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
+PRICE_LINE = _env("Our task is to make the product that can best million dollar System. this is we and we are defined for that.")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
 # What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
 # "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
 PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
@@ -138,9 +131,7 @@ BLOCKING_STATUSES = {"sent", "no_email", "low_fit", "no_phone", "bad_email", "du
 START_TS = time.time()
 
 HEADERS = {
-    # Identify the client and explicitly accept the JSON response Overpass returns.
-    "User-Agent": "AgentMailor/1.0 (business discovery; https://github.com/Mythesis002/AgentMailor)",
-    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; HimalayaITBot/4.0)",
     "Accept-Language": "en;q=0.9,*;q=0.5",
 }
 
@@ -495,7 +486,7 @@ def overpass_query(lat: float, lon: float, tags: list) -> str:
     parts = "".join(
         f'nwr["{k}"="{v}"][~"^(contact:)?(website|phone)$"~"."](around:{SEARCH_RADIUS_M},{lat},{lon});' for k, v in tags
     )
-    return f"[out:json][timeout:35];({parts});out tags 200;"
+    return f"[out:json][timeout:90];({parts});out tags 200;"
 
 
 def discover(city: tuple, category: str) -> list:
@@ -503,17 +494,19 @@ def discover(city: tuple, category: str) -> list:
     log.info(f"🔎 Discovering (OpenStreetMap): {category} in {name_}, {country}")
     time.sleep(2)                                   # be polite to the free public servers
     query, data = overpass_query(lat, lon, CATEGORIES[category]["osm"]), None
-    # Public Overpass instances are shared infrastructure. Keep fallback bounded:
-    # try each mirror once with a short timeout rather than spending many minutes per lead search.
-    for url in OVERPASS_URLS:
-        try:
-            resp = requests.post(url, data={"data": query}, headers=HEADERS, timeout=(8, 35))
-            if resp.status_code == 200:
-                data = resp.json()
-                break
-            log.warning(f"   Overpass {url} returned {resp.status_code}; trying next mirror")
-        except (requests.RequestException, ValueError) as e:
-            log.warning(f"   Overpass {url} failed: {e}; trying next mirror")
+    for attempt in range(3):
+        for url in OVERPASS_URLS:
+            try:
+                resp = requests.post(url, data={"data": query}, headers=HEADERS, timeout=120)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    break
+                log.warning(f"   Overpass {url} returned {resp.status_code}")
+            except (requests.RequestException, ValueError) as e:
+                log.warning(f"   Overpass {url} failed: {e}")
+        if data is not None:
+            break
+        time.sleep(15 * (attempt + 1))
 
     elements = (data or {}).get("elements", [])
     random.Random(f"{date.today()}-{name_}-{category}").shuffle(elements)
@@ -596,12 +589,8 @@ def rapid_search(query: str, lat: float, lng: float, region: str, limit: int, of
     remaining = resp.headers.get("x-ratelimit-requests-remaining")
     if remaining is not None:
         log.info(f"   RapidAPI requests remaining this period: {remaining}")
-    if resp.status_code in (401, 403):
-        log.error(f"   RapidAPI returned {resp.status_code} (key rejected or API subscription/permission issue): using OpenStreetMap instead")
-        _rapid_dead = True
-        return None
-    if resp.status_code == 429:
-        log.error("   RapidAPI returned 429 (rate limit or provider quota/subscription limit); check the RapidAPI dashboard and subscription for this API. Using OpenStreetMap instead")
+    if resp.status_code in (401, 403, 429):
+        log.error(f"   RapidAPI returned {resp.status_code} (invalid key / not subscribed / quota used up): using OpenStreetMap instead")
         _rapid_dead = True
         return None
     if resp.status_code != 200:
@@ -852,17 +841,9 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
     if reviews >= 30:
         facts["busy"] = f"With {reviews} Google reviews, plenty of people clearly find you."
 
-    # Match the email to the strongest observed business need, not always to phone automation.
-    if "no_site" in facts:
-        return pts, "no_site", facts["no_site"]
-    if "after_hours" in facts:
-        return pts, "after_hours", facts["after_hours"]
-    if "no_chat" in facts and site == "ok" and not sig.get("form"):
-        return pts, "no_chat", facts["no_chat"]
-    if site == "ok" and not sig.get("booking"):
-        return pts, "no_booking", "I couldn't find an obvious online booking or enquiry flow on your website."
-    if "busy" in facts:
-        return pts, "busy", facts["busy"]
+    for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
+        if angle in facts:
+            return pts, angle, facts[angle]
     return pts, "general", ""
 
 
@@ -977,11 +958,6 @@ SPAM_RE = re.compile(
     r"\bcheap\b|\bbonus\b|\bprize\b|unsubscribe now|this is not spam|\bsir\b|\bmadam\b|outreach", re.I)
 
 HOOKS = {
-    "no_booking": [
-        "Would a customer who wants to book or enquire be able to do that easily on your website?",
-        "I couldn't spot an obvious online booking or enquiry flow. Is that something you're looking to improve?",
-        "How do customers usually send an enquiry through your website today?"
-    ],
     "after_hours": [
         "When a {customer} wants to {call_for} after you've closed, who picks up the phone?",
         "What happens to the call from a {customer} who wants to {call_for} once you've shut for the day?",
@@ -1013,21 +989,21 @@ HOOKS = {
         "Who answers the phone when the whole team is busy?",
     ],
 }
-WHO_VARIANTS = [
-    "I build business websites, web apps and AI call agents.",
-    "I help businesses with websites, web applications and AI-powered call agents.",
-    "My work includes website development, web apps and AI call agents for businesses.",
+WHO_VARIANTS = [                    # used only when COMPANY_WHO is not set; keeps the intro from being identical every time
+    "We're a 25-person software team in Greater Noida, India.",
+    "We're a small software team in Greater Noida, India.",
+    "Our team of 25 builds software from Greater Noida, India.",
 ]
 INTROS = [
-    "I'm {sender}, an independent developer. {who}",
-    "My name is {sender}; I work as a freelance developer. {who}",
-    "I'm {sender}, a freelance developer who builds digital tools for businesses. {who}",
+    "I'm {sender} from {company}. {who}",
+    "My name is {sender}, from {company}. {who}",
+    "{sender} here, from {company}. {who}",
 ]
 FEATURE_SENTENCES = [
-    "I develop an AI receptionist for the phone. It {a}.",
-    "The AI receptionist I build {a}.",
-    "I build AI call agents that {a}.",
-    "My AI phone assistant can {a}.",
+    "We build an AI receptionist for the phone. It {a}.",
+    "Our AI receptionist {a}.",
+    "What we make is an AI receptionist that {a}.",
+    "We make an AI phone receptionist that {a}.",
 ]
 # The #1 reason small-business owners ignore this kind of email: "it will replace my staff / annoy my callers".
 POSITIONING = [
@@ -1047,28 +1023,6 @@ CTA_DEMO = [      # used when DEMO_PHONE is set: the prospect can hear it in a m
     "You can hear it yourself. Call {demo} and pretend to be a {customer} who wants to {call_for}.",
     "Call {demo} and try it as a {customer} would. If it sounds right, just reply and I'll set one up.",
 ]
-CTA_SERVICE = {
-    "no_site": [
-        "Would it be useful if I sent two website ideas tailored to your business?",
-        "Open to seeing a couple of practical website ideas for your business?",
-        "Would you be the right person to ask about improving your website presence?"
-    ],
-    "no_chat": [
-        "Would it help if I sent one or two ideas to make customer enquiries easier?",
-        "Open to a couple of practical ideas for improving the enquiry flow?",
-        "Would you like me to send a short example of how this could work?"
-    ],
-    "no_booking": [
-        "Would it be useful to see a simple example of how online enquiries or booking could work?",
-        "Is improving online enquiries something you're considering this year?",
-        "Would you be open to one practical idea for making enquiries easier?"
-    ],
-    "general": [
-        "Are you the right person to speak with about your website or digital tools?",
-        "Would it be useful if I sent one relevant idea based on your business?",
-        "Is improving your website or digital workflow on your radar this year?"
-    ],
-}
 CTA_REPLY = [     # used when DEMO_PHONE is not set
     "Want to hear it? Reply \"yes\" and I'll set up a 2-minute demo where you play the {customer}.",
     "Reply \"demo\" and I'll arrange a short call so you can hear how it handles a {customer}.",
@@ -1086,12 +1040,6 @@ SUBJECTS = {
     "general": ["Missed calls at {name}?", "A question about {name}'s phone", "When {name} can't pick up",
                 "Who answers at {name}?", "Phone calls at {name}"],
 }
-SUBJECTS.update({
-    "no_site": ["Website for {name}", "A website idea for {name}", "{name} online"],
-    "no_chat": ["A website idea for {name}", "Customer enquiries at {name}", "One idea for {name}"],
-    "no_booking": ["Online enquiries at {name}", "Booking flow for {name}", "One idea for {name}"],
-    "general": ["A digital idea for {name}", "Website and app development", "An idea for {name}"],
-})
 # Style directives given to Gemini (one random one per email) so no two emails share the same shape.
 STYLES = [
     "Open directly with the question. Short sentences. Warm and plain.",
@@ -1206,69 +1154,22 @@ def pick_features(info: dict) -> list:
     return chosen
 
 
-def closing_block(nm: str, info: dict, angle: str = "general") -> str:
+def closing_block(nm: str, info: dict) -> str:
     """Proof, price and the call to action. Written by CODE from YOUR settings, never invented by the AI."""
     fmt = {"customer": info["customer"], "call_for": info["call_for"], "name": nm or "your business",
            "demo": DEMO_PHONE}
     parts = [x for x in (PROOF_LINE, PRICE_LINE) if x]
-    if angle in ("no_site", "no_chat", "no_booking", "general"):
-        parts.append(random.choice(CTA_SERVICE.get(angle, CTA_SERVICE["general"])))
-    else:
-        parts.append(random.choice(CTA_DEMO if DEMO_PHONE else CTA_REPLY).format(**fmt))
+    parts.append(random.choice(CTA_DEMO if DEMO_PHONE else CTA_REPLY).format(**fmt))
     return "\n\n".join(parts)
 
 
-def assemble(biz: dict, core: str, angle: str = "general") -> str:
-    """Assemble a transparent, personal email without inventing how the lead was found."""
+def assemble(biz: dict, core: str) -> str:
     nm = display_name(biz["name"])
-    source = str(biz.get("source", "")).strip().lower().replace("_", " ")
-    source_note = ""
-    if source in ("google maps", "google map", "maps", "rapidapi"):
-        source_note = (
-            "I came across your business listing through Google Maps data while researching local businesses."
-        )
-    parts = [greeting(nm)]
-    if source_note:
-        parts.append(source_note)
-    parts.append(core)
-    parts.append(closing_block(nm, CATEGORIES[biz['category']], angle))
-    parts.append(signature(biz.get("country", "")))
-    return "\n\n".join(parts)
-
-
-def service_pitch(angle: str) -> str:
-    """Choose a truthful service angle from the observed business need, not a one-size-fits-all AI receptionist pitch."""
-    pitches = {
-        "no_site": (
-            "I could help with a professional, mobile-friendly website that clearly presents your services "
-            "and makes it easy for customers to contact you. I also build custom web applications and mobile apps."
-        ),
-        "no_chat": (
-            "I build and improve business websites and web apps, including useful enquiry flows and customer "
-            "communication features where they fit. I also develop mobile apps and AI-powered tools."
-        ),
-        "no_booking": (
-            "I build business websites and web apps that can make enquiries and appointment requests easier "
-            "to manage. I also develop mobile apps and custom software when a business needs them."
-        ),
-        "after_hours": (
-            "I develop AI phone receptionists to help handle calls when a team is busy or closed. I also build "
-            "business websites, web apps, mobile apps and custom software."
-        ),
-        "busy": (
-            "I develop AI phone receptionists to help handle calls when a team is busy or cannot pick up. I also "
-            "build business websites, web apps, mobile apps and custom software."
-        ),
-        "general": (
-            "I build business websites, custom web applications, mobile apps and AI-powered automation, "
-            "choosing the solution around the business's actual needs."
-        ),
-    }
-    return pitches.get(angle, pitches["general"])
+    return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
 
 
 def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
-    """Gemini writes a personalized email around the most relevant software service, with safe factual claims."""
+    """Gemini writes the opening and the pitch fresh for every business. Rejected if spammy or too similar to a recent email."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
     hook_hint = random.choice(HOOKS[angle]).format(name=nm, customer=info["customer"], call_for=info["call_for"])
@@ -1276,47 +1177,30 @@ def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
     avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
     fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
     for attempt in range(3):
-        identity = (
-            f"I'm {SENDER_NAME}, an independent freelance developer. {COMPANY_WHO}"
-            if not COMPANY_NAME else
-            f"I'm {SENDER_NAME}, a freelance developer working under {COMPANY_NAME}. {COMPANY_WHO}"
-        )
         prompt = f"""
-Write the BODY of a short cold email from {SENDER_NAME}, a freelance developer, to the owner of "{nm}"
+Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the owner of "{nm}"
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
-The sender is an independent freelancer, NOT a large company or a team. Never describe the sender as "we", a company team, or an agency unless an explicitly configured, truthful company identity says otherwise.
-The greeting, call to action and signature are added automatically: do NOT write them.
-Write exactly two short paragraphs, 45 to 75 words in total, plain text, no markdown, no emojis, no links. Make it sound like a thoughtful individual who briefly researched the business, not a mass campaign.
-Explain naturally that the sender found the business listing on Google Maps, only when this is true of the lead's source.
+The greeting, the call to action and the signature are added automatically: do NOT write them.
+Write exactly two short paragraphs, 45 to 80 words in total, plain text, no markdown, no emojis, no links.
 
-PARAGRAPH 1: Start with the verified observation only: {fact_rule}
-  Do NOT invent a problem, imply the business is losing leads, or ask about missed phone calls unless the selected angle is "after_hours" or "busy".
-  For "no_site", frame the idea around making the business easier to discover and contact online.
-  For "no_chat" or "no_booking", frame it around making customer enquiries or appointment requests easier.
-  For "after_hours" or "busy", you may ask one practical question about handling calls.
-  For "general", use a relevant, non-assumptive opening.
+PARAGRAPH 1: {fact_rule}
+  Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
+  Hook idea (rephrase in your own words): {hook_hint}
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
-PARAGRAPH 2: Introduce the sender honestly as a freelance developer using this description: "{identity}"
-  Primary service angle for this prospect, based on the measured evidence: {service_pitch(angle)}
-  Available services: {SERVICE_OFFERINGS}
-  Pick ONE primary service only for this email. For "no_site", lead with website development. For "no_chat" or "no_booking", lead with website/web-app improvements. For "after_hours" or "busy", lead with the AI receptionist. For "general", choose a service only if available evidence supports it; otherwise ask a neutral qualification question. Mention other services only if they naturally fit, not as a laundry list.
-  Describe AI receptionist features (such as {a} and {b}) only when the selected angle is "after_hours" or "busy". Do not imply the recipient has a problem that was not measured.
+PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
+  then say you build an AI receptionist for the phone: it {a} and {b}.
+  Make clear it is meant for the calls the team cannot get to and does not replace anyone.
 STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
 - Sound like one real person writing to another. No hype, no urgency tricks, no exclamation marks.
-- When relevant to the evidence, call it "an AI receptionist" or "AI phone assistant"; do not force an AI receptionist pitch into every email.
-- Do not list all services in every email. Sell one relevant service per email; the company website/signature can show the broader service range.
-- Keep the primary service tied to the observed business need; do not claim that a business has no website, booking system or chat unless the code actually measured that fact.
+- Always call it "an AI receptionist" (or "AI phone assistant"), never just "the agent".
 - Do NOT invent clients, results, statistics, prices, awards, languages, integrations or guarantees. Never claim we called them or tested their phone.
-- Avoid sales clichés such as "I hope you're doing well", "just checking in", "game-changer", "transform your business", "boost growth", "unlock potential", or fake familiarity.
 - Never use the words: free, offer, discount, guarantee, urgent, sale, outreach.
 - Do not reuse the wording of these recent emails (use different sentence openings and structure):
 {avoid}
-- Subject: 15 to 45 characters, plain and specific to the service or observation; no fake "Re:", "quick question", "urgent", "!" or ALL CAPS.
-- CTA: ask for one small next step (permission to send an idea, a simple yes/no, or the right contact), not a forced meeting/demo.
-- Do not claim a custom audit, mockup, proposal, research, or result already exists unless supplied in the input.
+- Subject: 20 to 50 characters, specific to their business, curious but honest, no "!", no ALL CAPS, not "quick question".
 
 Return ONLY JSON: {{"subject": "...", "body": "..."}}
 """
@@ -1324,7 +1208,7 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
         if not data:
             continue
         subject, core = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
-        body = assemble(biz, core, angle)
+        body = assemble(biz, core)
         problems = spam_problems(subject, body)
         if re.match(r"\s*(hi|hello|dear)\b", core, re.I):
             problems.append("greeting must not be written by the AI")
@@ -1350,12 +1234,15 @@ def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
     p1 = f"{fact} {hook}".strip() if fact else hook
     who = COMPANY_WHO if _env("COMPANY_WHO") else random.choice(WHO_VARIANTS)
     intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
-    pitch = service_pitch(angle)
-    positioning = random.choice(POSITIONING) if angle in ("after_hours", "busy") else ""
-    p2 = " ".join(x for x in (intro, pitch, positioning) if x)
+    a, b = pick_features(info)
+    feats = random.choice(FEATURE_SENTENCES).format(a=a)
+    if random.random() < 0.5:
+        feats += f" It also {b}."
+    timing = random.choice(TIMINGS).format(d=DELIVERY_DAYS)
+    p2 = " ".join(x for x in (intro, feats, random.choice(POSITIONING), timing) if x)
     core = f"{p1}\n\n{p2}"
     subject = random.choice(SUBJECTS[angle]).format(name=nm)
-    return {"subject": subject[:55], "core": core, "body": assemble(biz, core, angle), "source": "template"}
+    return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
 
 
 def fallback_email(biz: dict, angle: str, fact: str) -> dict:
@@ -1375,18 +1262,15 @@ def fallback_email(biz: dict, angle: str, fact: str) -> dict:
 
 
 def signature(country: str = "", followup: bool = False) -> str:
-    """Honest individual freelancer signature; do not imply an agency if none is configured."""
-    lines = ["", "Regards,", SENDER_NAME]
-    if COMPANY_NAME:
-        lines.append(COMPANY_NAME)
-    lines.append("Freelance Web & AI Developer")
+    """Plain signature. The website is included so the owner can check who you are before replying."""
+    lines = ["", "Regards,", SENDER_NAME, COMPANY_NAME]
     if COMPANY_PHONE:
         lines.append(f"WhatsApp / call: {COMPANY_PHONE}")
     if COMPANY_SITE:
         lines.append(COMPANY_SITE)
     if COMPANY_ADDRESS:
         lines.append(COMPANY_ADDRESS)
-    lines += ["", "If this isn't relevant, let me know and I won't follow up."]
+    lines += ["", "If this isn't for you, reply \"no\" and I won't write again (or pass it to whoever handles your phones)."]
     return "\n".join(lines)
 
 
@@ -1568,27 +1452,18 @@ def sync_inbox() -> Optional[dict]:
 
 
 def followup_body(row: dict) -> str:
-    """One concise, relevant follow-up; never switch a website lead into an AI receptionist pitch."""
-    angle = row.get("main_issue", "general")
-    nm = display_name(row.get("business") or "")
-    if angle in ("no_site", "no_chat", "no_booking", "general"):
-        messages = {
-            "no_site": "I reached out because a clear website can help people understand your services and contact you. I can send two ideas tailored to your business if useful.",
-            "no_chat": "I was thinking about how customers get from your website to making an enquiry. I can share one or two practical improvements if useful.",
-            "no_booking": "I reached out about making online enquiries or appointment requests simpler. Would an example of that flow be useful?",
-            "general": "I build websites, web apps and mobile apps for businesses. If improving any of those is on your roadmap, I can send a relevant example."
-        }
-        return f"{greeting(nm)}\n\n{messages.get(angle, messages['general'])}"
     info = CATEGORIES.get(row.get("category", ""))
-    does = info["does"] if info else "answers common questions"
+    nm = display_name(row.get("business") or "")
+    does = info["does"] if info else "books appointments and answers common questions"
     who = info["customer"] if info else "customer"
     call_for = info["call_for"] if info else "book an appointment"
     ask = (f"You can hear it in a minute: call {DEMO_PHONE} and talk to it like a {who} who wants to {call_for}."
-           if DEMO_PHONE else "Would a short demo be useful?")
+           if DEMO_PHONE else f"If you'd like to hear it, reply \"yes\" and I'll set up a short demo.")
     return (
         f"{greeting(nm)}\n\n"
-        "Following up on my earlier note about handling calls when your team is busy. "
-        f"The AI call agent I develop can {does}.\n\n{ask}"
+        "In case my earlier note got buried: I make an AI receptionist for the phone. It picks up the calls your team "
+        f"can't get to and {does}.\n\n"
+        f"{ask}\n"
     )
 
 
@@ -1652,12 +1527,13 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     sig = site_signals(r) if r is not None else {}
 
     phone = (site_phone(r.text) if r is not None else "") or biz.get("phone") or ""
+    if not phone:
+        log.info(f"⏭️  {key}: no phone number, a call agent has nothing to answer")
+        record({**base, "status": "no_phone"})
+        return False
+
     hrs = parse_hours(biz.get("hours"))
     score, angle, fact = score_lead(biz, site, sig, hrs)
-    if angle in ("after_hours", "busy") and not phone:
-        log.info(f"⏭️  {key}: no phone number for a phone-agent pitch")
-        record({**base, "main_issue": angle, "score": score, "status": "no_phone"})
-        return False
     if score < SCORE_MIN:
         log.info(f"⏭️  {key}: fit score {score} < {SCORE_MIN}, they probably don't need a call agent")
         record({**base, "main_issue": angle, "score": score, "status": "low_fit"})
@@ -1751,7 +1627,7 @@ def main() -> None:
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
-    log.info(f"🚀 Freelance Web & AI Outreach | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | "
+    log.info(f"🚀 Himalaya IT AI Call Agent Outreach v7 | dry_run={DRY_RUN} | daily_limit={DAILY_LIMIT} | "
              f"min_score={SCORE_MIN} | hours_only={BUSINESS_HOURS_ONLY}")
     if not RAPIDAPI_KEY:
         log.warning("RAPIDAPI_KEY not set: using free OpenStreetMap discovery only")
