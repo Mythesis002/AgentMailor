@@ -1215,17 +1215,21 @@ def closing_block(nm: str, info: dict, angle: str = "general") -> str:
 
 
 def assemble(biz: dict, core: str, angle: str = "general") -> str:
+    """Assemble a transparent, personal email without inventing how the lead was found."""
     nm = display_name(biz["name"])
-    source_note = (
-        "I found your business listing on Google Maps while looking for businesses I could help with their online presence."
-        if biz.get("source") == "google_maps" or biz.get("source") == "Google Maps" else ""
-    )
-    parts = [greeting(nm), core]
-    if source_note and source_note.lower() not in core.lower():
-        parts.insert(1, source_note)
+    source = str(biz.get("source", "")).strip().lower().replace("_", " ")
+    source_note = ""
+    if source in ("google maps", "google map", "maps"):
+        source_note = (
+            "I came across your business listing on Google Maps while researching local businesses."
+        )
+    parts = [greeting(nm)]
+    if source_note:
+        parts.append(source_note)
+    parts.append(core)
     parts.append(closing_block(nm, CATEGORIES[biz['category']], angle))
     parts.append(signature(biz.get("country", "")))
-    return "\n\n".join(parts)
+    return "\\n\\n".join(parts)
 
 
 def service_pitch(angle: str) -> str:
