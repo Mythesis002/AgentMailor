@@ -104,11 +104,15 @@ COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
 COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
 COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", "We're a  software Agency in Greater Noida, India.")
+COMPANY_WHO = _env("COMPANY_WHO", "We build business websites, custom web applications, mobile apps, and AI-powered automation.")
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
-DEMO_PHONE = _env("+91 6392449432")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
-PROOF_LINE = _env("It already answers calls for 6 clinics in Los Angeles.")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
-PRICE_LINE = _env("Our task is to make the product that can best million dollar System. this is we and we are defined for that.")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
+DEMO_PHONE = _env("DEMO_PHONE")          # optional: only include a demo number when it is configured and working
+PROOF_LINE = _env("PROOF_LINE")            # optional: set only to a verifiable, accurate proof point
+PRICE_LINE = _env("PRICE_LINE")            # optional: set only to a real, approved pricing statement
+SERVICE_OFFERINGS = _env(
+    "SERVICE_OFFERINGS",
+    "business websites | custom web applications | mobile apps | AI-powered automation and voice agents",
+)
 # What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
 # "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
 PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
@@ -1168,8 +1172,39 @@ def assemble(biz: dict, core: str) -> str:
     return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
 
 
+def service_pitch(angle: str) -> str:
+    """Choose a truthful service angle from the observed business need, not a one-size-fits-all AI receptionist pitch."""
+    pitches = {
+        "no_site": (
+            "Our primary fit may be a professional, mobile-friendly website that clearly presents your services "
+            "and makes it easy for customers to contact you. We also build custom web applications and mobile apps."
+        ),
+        "no_chat": (
+            "We build and improve business websites and web apps, including useful enquiry flows and customer "
+            "communication features where they fit. We also develop mobile apps and AI-powered tools."
+        ),
+        "no_booking": (
+            "We build business websites and web apps that can make enquiries and appointment requests easier "
+            "to manage. We also develop mobile apps and custom software when a business needs them."
+        ),
+        "after_hours": (
+            "We build AI phone receptionists to help handle calls when a team is busy or closed. We also develop "
+            "business websites, web apps, mobile apps and custom software."
+        ),
+        "busy": (
+            "We build AI phone receptionists to help handle calls when a team is busy or cannot pick up. We also "
+            "develop business websites, web apps, mobile apps and custom software."
+        ),
+        "general": (
+            "We build business websites, custom web applications, mobile apps and AI-powered automation, "
+            "choosing the solution around the business's actual needs."
+        ),
+    }
+    return pitches.get(angle, pitches["general"])
+
+
 def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
-    """Gemini writes the opening and the pitch fresh for every business. Rejected if spammy or too similar to a recent email."""
+    """Gemini writes a personalized email around the most relevant software service, with safe factual claims."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
     hook_hint = random.choice(HOOKS[angle]).format(name=nm, customer=info["customer"], call_for=info["call_for"])
@@ -1188,14 +1223,18 @@ PARAGRAPH 1: {fact_rule}
   Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
   Hook idea (rephrase in your own words): {hook_hint}
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
-PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
-  then say you build an AI receptionist for the phone: it {a} and {b}.
-  Make clear it is meant for the calls the team cannot get to and does not replace anyone.
+PARAGRAPH 2: Introduce the company using this accurate description: "I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"
+  Primary service angle for this prospect, based on the measured evidence: {service_pitch(angle)}
+  Available services: {SERVICE_OFFERINGS}
+  Explain the relevant service clearly. Missing website means prioritize website development; missing booking/chat means prioritize a website or web-app improvement; after-hours/busy phone evidence means prioritize the AI receptionist. Mention the wider website, web-app and mobile-app development capabilities naturally, but do not dump a long service list or claim every service is needed.
+  Describe AI receptionist features (such as {a} and {b}) only when the selected angle is "after_hours" or "busy". Do not imply the recipient has a problem that was not measured.
 STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
 - Sound like one real person writing to another. No hype, no urgency tricks, no exclamation marks.
-- Always call it "an AI receptionist" (or "AI phone assistant"), never just "the agent".
+- When relevant to the evidence, call it "an AI receptionist" or "AI phone assistant"; do not force an AI receptionist pitch into every email.
+- Clearly communicate that we provide website development, web application development and mobile app development.
+- Keep the primary service tied to the observed business need; do not claim that a business has no website, booking system or chat unless the code actually measured that fact.
 - Do NOT invent clients, results, statistics, prices, awards, languages, integrations or guarantees. Never claim we called them or tested their phone.
 - Never use the words: free, offer, discount, guarantee, urgent, sale, outreach.
 - Do not reuse the wording of these recent emails (use different sentence openings and structure):
@@ -1234,12 +1273,9 @@ def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
     p1 = f"{fact} {hook}".strip() if fact else hook
     who = COMPANY_WHO if _env("COMPANY_WHO") else random.choice(WHO_VARIANTS)
     intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
-    a, b = pick_features(info)
-    feats = random.choice(FEATURE_SENTENCES).format(a=a)
-    if random.random() < 0.5:
-        feats += f" It also {b}."
-    timing = random.choice(TIMINGS).format(d=DELIVERY_DAYS)
-    p2 = " ".join(x for x in (intro, feats, random.choice(POSITIONING), timing) if x)
+    pitch = service_pitch(angle)
+    positioning = random.choice(POSITIONING) if angle in ("after_hours", "busy") else ""
+    p2 = " ".join(x for x in (intro, pitch, positioning) if x)
     core = f"{p1}\n\n{p2}"
     subject = random.choice(SUBJECTS[angle]).format(name=nm)
     return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
