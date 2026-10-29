@@ -99,16 +99,16 @@ WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly
 SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
-COMPANY_NAME = _env("COMPANY_NAME", "Himalaya IT")
+COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
 COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
-COMPANY_SITE = _env("COMPANY_WEBSITE", "opentry.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
+COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", "We're a 25-person software team in Greater Noida, India.")
+COMPANY_WHO = _env("COMPANY_WHO", "We're a  software Agency in Greater Noida, India.")
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
-DEMO_PHONE = _env("DEMO_PHONE")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
-PROOF_LINE = _env("PROOF_LINE")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
-PRICE_LINE = _env("PRICE_LINE")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
+DEMO_PHONE = _env("+91 6392449432")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
+PROOF_LINE = _env("It already answers calls for 6 clinics in Los Angeles.")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
+PRICE_LINE = _env("Our task is to make the product that can best million dollar System. this is we and we are defined for that.")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
 # What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
 # "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
 PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
