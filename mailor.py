@@ -99,12 +99,15 @@ WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly
 SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
-COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
+COMPANY_NAME = _env("COMPANY_NAME", "")  # optional; leave blank for transparent freelancer outreach
 COMPANY_PHONE = _env("COMPANY_PHONE")
 COMPANY_SITE = _env("COMPANY_WEBSITE")
 COMPANY_ADDRESS = _env("COMPANY_ADDRESS")   # required to email US businesses (CAN-SPAM)
 DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", "We build business websites, custom web applications, mobile apps, and AI-powered automation.")
+COMPANY_WHO = _env(
+    "COMPANY_WHO",
+    "I'm an independent developer. I build websites and web apps, and I also develop AI call agents for businesses."
+)
 # The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
 DEMO_PHONE = _env("DEMO_PHONE")          # optional: only include a demo number when it is configured and working
 PROOF_LINE = _env("PROOF_LINE")            # optional: set only to a verifiable, accurate proof point
@@ -1006,15 +1009,15 @@ HOOKS = {
         "Who answers the phone when the whole team is busy?",
     ],
 }
-WHO_VARIANTS = [                    # used only when COMPANY_WHO is not set; keeps the intro from being identical every time
-    "We're a 25-person software team in Greater Noida, India.",
-    "We're a small software team in Greater Noida, India.",
-    "Our team of 25 builds software from Greater Noida, India.",
+WHO_VARIANTS = [
+    "I build business websites, web apps and AI call agents.",
+    "I help businesses with websites, web applications and AI-powered call agents.",
+    "My work includes website development, web apps and AI call agents for businesses.",
 ]
 INTROS = [
-    "I'm {sender} from {company}. {who}",
-    "My name is {sender}, from {company}. {who}",
-    "{sender} here, from {company}. {who}",
+    "I'm {sender}, an independent developer. {who}",
+    "My name is {sender}; I work as a freelance developer. {who}",
+    "I'm {sender}, a freelance developer who builds digital tools for businesses. {who}",
 ]
 FEATURE_SENTENCES = [
     "We build an AI receptionist for the phone. It {a}.",
@@ -1213,7 +1216,16 @@ def closing_block(nm: str, info: dict, angle: str = "general") -> str:
 
 def assemble(biz: dict, core: str, angle: str = "general") -> str:
     nm = display_name(biz["name"])
-    return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']], angle)}"
+    source_note = (
+        "I found your business listing on Google Maps while looking for businesses I could help with their online presence."
+        if biz.get("source") == "google_maps" or biz.get("source") == "Google Maps" else ""
+    )
+    parts = [greeting(nm), core]
+    if source_note and source_note.lower() not in core.lower():
+        parts.insert(1, source_note)
+    parts.append(closing_block(nm, CATEGORIES[biz['category']], angle))
+    parts.append(signature(biz.get("country", "")))
+    return "\n\n".join(parts)
 
 
 def service_pitch(angle: str) -> str:
@@ -1256,12 +1268,19 @@ def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
     avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
     fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
     for attempt in range(3):
-        prompt = f"""
-Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the owner of "{nm}"
+        identity = (
+        f"I'm {SENDER_NAME}, an independent freelance developer. {COMPANY_WHO}"
+        if not COMPANY_NAME else
+        f"I'm {SENDER_NAME}, a freelance developer working under {COMPANY_NAME}. {COMPANY_WHO}"
+    )
+    prompt = f"""
+Write the BODY of a short cold email from {SENDER_NAME}, a freelance developer, to the owner of "{nm}"
 ({biz['category']}, {biz['city']}, {biz.get('country', '')}).
 
-The greeting, the call to action and the signature are added automatically: do NOT write them.
-Write exactly two short paragraphs, 45 to 75 words in total, plain text, no markdown, no emojis, no links. Make it sound like a thoughtful founder wrote it after a quick look at the business, not like a mass campaign.
+The sender is an independent freelancer, NOT a large company or a team. Never describe the sender as "we", a company team, or an agency unless an explicitly configured, truthful company identity says otherwise.
+The greeting, call to action and signature are added automatically: do NOT write them.
+Write exactly two short paragraphs, 45 to 75 words in total, plain text, no markdown, no emojis, no links. Make it sound like a thoughtful individual who briefly researched the business, not a mass campaign.
+Explain naturally that the sender found the business listing on Google Maps, only when this is true of the lead's source.
 
 PARAGRAPH 1: Start with the verified observation only: {fact_rule}
   Do NOT invent a problem, imply the business is losing leads, or ask about missed phone calls unless the selected angle is "after_hours" or "busy".
@@ -1270,7 +1289,7 @@ PARAGRAPH 1: Start with the verified observation only: {fact_rule}
   For "after_hours" or "busy", you may ask one practical question about handling calls.
   For "general", use a relevant, non-assumptive opening.
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
-PARAGRAPH 2: Introduce the company using this accurate description: "I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"
+PARAGRAPH 2: Introduce the sender honestly as a freelance developer using this description: "{identity}"
   Primary service angle for this prospect, based on the measured evidence: {service_pitch(angle)}
   Available services: {SERVICE_OFFERINGS}
   Pick ONE primary service only for this email. For "no_site", lead with website development. For "no_chat" or "no_booking", lead with website/web-app improvements. For "after_hours" or "busy", lead with the AI receptionist. For "general", choose a service only if available evidence supports it; otherwise ask a neutral qualification question. Mention other services only if they naturally fit, not as a laundry list.
@@ -1348,15 +1367,18 @@ def fallback_email(biz: dict, angle: str, fact: str) -> dict:
 
 
 def signature(country: str = "", followup: bool = False) -> str:
-    """Plain signature. The website is included so the owner can check who you are before replying."""
-    lines = ["", "Regards,", SENDER_NAME, COMPANY_NAME]
+    """Honest individual freelancer signature; do not imply an agency if none is configured."""
+    lines = ["", "Regards,", SENDER_NAME]
+    if COMPANY_NAME:
+        lines.append(COMPANY_NAME)
+    lines.append("Freelance Web & AI Developer")
     if COMPANY_PHONE:
         lines.append(f"WhatsApp / call: {COMPANY_PHONE}")
     if COMPANY_SITE:
         lines.append(COMPANY_SITE)
     if COMPANY_ADDRESS:
         lines.append(COMPANY_ADDRESS)
-    lines += ["", "If this isn't for you, reply \"no\" and I won't write again (or pass it to whoever handles your phones)."]
+    lines += ["", "If this isn't relevant, let me know and I won't follow up."]
     return "\n".join(lines)
 
 
