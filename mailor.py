@@ -970,6 +970,11 @@ SPAM_RE = re.compile(
     r"\bcheap\b|\bbonus\b|\bprize\b|unsubscribe now|this is not spam|\bsir\b|\bmadam\b|outreach", re.I)
 
 HOOKS = {
+    "no_booking": [
+        "Would a customer who wants to book or enquire be able to do that easily on your website?",
+        "I couldn't spot an obvious online booking or enquiry flow. Is that something you're looking to improve?",
+        "How do customers usually send an enquiry through your website today?"
+    ],
     "after_hours": [
         "When a {customer} wants to {call_for} after you've closed, who picks up the phone?",
         "What happens to the call from a {customer} who wants to {call_for} once you've shut for the day?",
