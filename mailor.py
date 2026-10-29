@@ -1574,7 +1574,7 @@ def followup_body(row: dict) -> str:
             "no_booking": "I reached out about making online enquiries or appointment requests simpler. Would an example of that flow be useful?",
             "general": "I build websites, web apps and mobile apps for businesses. If improving any of those is on your roadmap, I can send a relevant example."
         }
-        return f"{greeting(nm)}\n\n{messages.get(angle, messages['general'])}\n\n{signature(row.get('country', ''))}"
+        return f"{greeting(nm)}\n\n{messages.get(angle, messages['general'])}"
     info = CATEGORIES.get(row.get("category", ""))
     does = info["does"] if info else "answers common questions"
     who = info["customer"] if info else "customer"
@@ -1584,7 +1584,7 @@ def followup_body(row: dict) -> str:
     return (
         f"{greeting(nm)}\n\n"
         "Following up on my earlier note about handling calls when your team is busy. "
-        f"The AI call agent I develop can {does}.\n\n{ask}\n\n{signature(row.get('country', ''))}"
+        f"The AI call agent I develop can {does}.\n\n{ask}"
     )
 
 
