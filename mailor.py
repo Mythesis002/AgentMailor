@@ -1020,10 +1020,10 @@ INTROS = [
     "I'm {sender}, a freelance developer who builds digital tools for businesses. {who}",
 ]
 FEATURE_SENTENCES = [
-    "We build an AI receptionist for the phone. It {a}.",
-    "Our AI receptionist {a}.",
-    "What we make is an AI receptionist that {a}.",
-    "We make an AI phone receptionist that {a}.",
+    "I develop an AI receptionist for the phone. It {a}.",
+    "The AI receptionist I build {a}.",
+    "I build AI call agents that {a}.",
+    "My AI phone assistant can {a}.",
 ]
 # The #1 reason small-business owners ignore this kind of email: "it will replace my staff / annoy my callers".
 POSITIONING = [
@@ -1221,7 +1221,7 @@ def assemble(biz: dict, core: str, angle: str = "general") -> str:
     source_note = ""
     if source in ("google maps", "google map", "maps", "rapidapi"):
         source_note = (
-            "I came across your business listing on Google Maps while researching local businesses."
+            "I came across your business listing through Google Maps data while researching local businesses."
         )
     parts = [greeting(nm)]
     if source_note:
