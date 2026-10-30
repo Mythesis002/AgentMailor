@@ -294,3 +294,28 @@ date,business,city,website,domain,email,subject,main_issue,status,message_id,cou
 2026-10-29 16:18,EastEnd Autos,Glasgow,,osm:node6791828027,,,no_site,no_email,,United Kingdom,car repair and dealers,6
 2026-10-29 16:18,Horner's,Glasgow,https://hornergroup.co.uk,hornergroup.co.uk,maryhill@hornergroup.co.uk,Missed calls at Horner's?,no_chat,sent,<179329072237.2217.10858085435034003316@gmail.com>,United Kingdom,car repair and dealers,6
 2026-10-29 16:20,Clarkson of Glasgow,Glasgow,https://clarkson-commercials.co.uk,clarkson-commercials.co.uk,sales@clarkson-commercials.co.uk,Calls to Clarkson of Glasgow when busy,no_chat,sent,<179329081772.2217.8063971759767181628@gmail.com>,United Kingdom,car repair and dealers,7
+2026-10-30 11:01,Orofit Dental Experts Clinic,Nashik,https://orofit.in,orofit.in,info@orofit.in,Orofit Dental: Calls when closed?,after_hours,sent,<179335808091.2230.4482076979561361372@gmail.com>,India,dental clinics,10
+2026-10-30 11:03,"Dr. Abhijit Tambe Best Prosthodontist/ Dr. Renu best Dentist in Nashik @ Pearls 32 and You dental clinic, Ashokstambh",Nashik,https://drabhijittambedentist.com,drabhijittambedentist.com,drabhijittambe24@gmail.com,Patient calls for your clinic on Sundays,after_hours,sent,<179335823036.2230.7839409438504364674@gmail.com>,India,dental clinics,9
+2026-10-30 11:05,Deep dental and orthodontic clinic,Nashik,,gmaps:ChIJFyL1OgHr3TsRT3pGd2CXAJE,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:05,Care32,Nashik,https://care32dentalandimplant.com,care32dentalandimplant.com,diptesh_mutha@yahoo.com,Patient calls when closed,after_hours,sent,<179335832402.2230.16273464843342995224@gmail.com>,India,dental clinics,11
+2026-10-30 11:06,"Kulkarni Dental Hospital, Nashik",Nashik,https://kulkarnidentalhospital.com,kulkarnidentalhospital.com,,,busy,low_fit,,India,dental clinics,4
+2026-10-30 11:07,Anand Smile Dental Clinic | Dr. Anand N. Chopda & Dr. Anuradha A. Chopda | Panchavati Nashik,Nashik,https://mymedisage.com,mymedisage.com,info@mymedisage.com,Unanswered calls for Dr. Anand N.,after_hours,sent,<179335842784.2230.5875745147615916913@gmail.com>,India,dental clinics,10
+2026-10-30 11:09,𝗝𝘆𝗼𝘁𝗶 Dental Clinic- Dr. Rohit Mamude,Nashik,https://jyotidental.in,jyotidental.in,jyotidentalclinic32@gmail.com,Patient calls for your clinic?,busy,sent,<179335854916.2230.15007612137936211620@gmail.com>,India,dental clinics,8
+2026-10-30 11:11,The White Pearl Dental Clinic | Best Dentist in Nashik | Dr Suraj Tambe | Dr Sneha Tambe,Nashik,https://thewhitepearlclinic.com,thewhitepearlclinic.com,info@thewhitepearlclinic.com,,busy,bad_email,,India,dental clinics,8
+2026-10-30 11:11,Varad Dental Care Center,Nashik,,gmaps:ChIJ35YMLanr3TsRyzw1l6ZHnwQ,,,no_site,no_email,,India,dental clinics,8
+2026-10-30 11:11,Smile Works Dental Clinic and Implant Centre,Nashik,https://smileworksnashik.com,smileworksnashik.com,,,after_hours,no_email,,India,dental clinics,8
+2026-10-30 11:11,Avdhoot Dental clinic by Dr. Pooja,Nashik,,gmaps:ChIJSTlwdwDr3TsRt4-BnTZf0VA,,,no_site,no_email,,India,dental clinics,8
+2026-10-30 11:11,Reason to Smile Dental Clinic,Nashik,,gmaps:ChIJgd1o5dHr3TsRcKaMwTCOtdE,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:11,Chartered Smiles Dental Clinic and Implant Centre,Nashik,,gmaps:ChIJdc0Qaxjr3TsRAqInxHhdak8,,,no_site,no_email,,India,dental clinics,6
+2026-10-30 11:11,Dr. Saniya's Family Dental Clinic,Nashik,,gmaps:ChIJy6ouPgDr3TsRCUl8d4z8oeQ,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:11,Siddhivinayak Dental Care,Nashik,,gmaps:ChIJN1f9-avr3TsRlziII5keBrk,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:11,Ramole Dental Clinic,Nashik,https://ramoledental.com,ramoledental.com,impallari@gmail.com,Ramole Dental: Sunday calls?,after_hours,sent,<179335870068.2230.17477502536132179431@gmail.com>,India,dental clinics,10
+2026-10-30 11:13,OrthoSquare Dental Clinic,Nashik,https://dental-clinics.orthosquare.com,dental-clinics.orthosquare.com,,,after_hours,no_email,,India,dental clinics,7
+2026-10-30 11:13,Dr. Mahale Dental Clinic,Nashik,https://drmahale.com,drmahale.com,,,after_hours,no_email,,India,dental clinics,7
+2026-10-30 11:13,Abbad Dental Clinic Nashik,Nashik,https://abbaddentalclinic.com,abbaddentalclinic.com,,,busy,no_email,,India,dental clinics,8
+2026-10-30 11:13,Dr. Dhakad's Noble Smile Multi-speciality Dental Clinic (Branch1),Nashik,,gmaps:ChIJ8UR5ra_r3TsR2XitHwohp6o,,,no_site,no_email,,India,dental clinics,8
+2026-10-30 11:13,Parashar Multispeciality Dental Clinic,Nashik,https://upscaleit.github.io,upscaleit.github.io,,,general,low_fit,,India,dental clinics,3
+2026-10-30 11:13,Kalakiran Dental Clinic,Nashik,,gmaps:ChIJg8nWNxfr3TsR9ZcxxkP5HT0,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:13,Cozy Dental : By Dr Patani,Nashik,https://drpatanidental.co.in,drpatanidental.co.in,drpatanidentalcarenasik@gmail.com,Calls missed at Cozy Dental?,busy,sent,<179335883029.2230.15900927599500854265@gmail.com>,India,dental clinics,8
+2026-10-30 11:16,Apex Dental Multi-Speciality Clinic,Nashik,,gmaps:ChIJI5iEhG_r3TsRLc2QFbPHOHs,,,after_hours,no_email,,India,dental clinics,10
+2026-10-30 11:16,(KPL) Kathmandu Pathlab & Diagnostic Center Pvt.Ltd,Kathmandu,https://kathmandupathlab.com,kathmandupathlab.com,info@kathmandupathlab.com,Kathmandu Pathlab: Calls after closing?,after_hours,sent,<179335898918.2230.9473646288835395632@gmail.com>,Nepal,diagnostic labs,8
