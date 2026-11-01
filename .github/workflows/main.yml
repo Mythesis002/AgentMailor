@@ -2,10 +2,12 @@ name: AgentMailor Freelance Web & AI Outreach
 
 on:
   schedule:
-    # Three runs per weekday so each region is emailed during ITS business hours (times in UTC)
-    - cron: "30 4 * * 1-5"     # India / Asia-Pacific morning
-    - cron: "0 9 * * 1-5"      # Europe / Middle East / Africa / India afternoon
-    - cron: "30 16 * * 1-5"    # Americas morning
+    # Daily at 6:00 AM IST (00:30 UTC)
+    - cron: "30 0 * * *"
+
+    # Daily at 6:00 PM IST (12:30 UTC)
+    - cron: "30 12 * * *"
+
   workflow_dispatch:
     inputs:
       dry_run:
