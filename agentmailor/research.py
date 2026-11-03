@@ -99,7 +99,7 @@ def opportunity_score(*, category_weight: int, research: ResearchReport,
                       email_verified: bool, suppressed: bool = False,
                       already_contacted: bool = False) -> tuple[int, list[str]]:
     """Score fit separately from mandatory eligibility/safety gates."""
-    score = max(0, min(100, int(category_weight) * 4))
+    score = max(0, min(100, int(category_weight) * 10))
     score += research.opportunity_score
     reasons = list(research.rationale)
     if phone_present:
