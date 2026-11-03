@@ -45,6 +45,8 @@ from typing import Optional
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+from agentmailor.intelligence import review_email, safe_personalization
+
 import dns.resolver
 import requests
 import urllib3
@@ -99,16 +101,16 @@ WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly
 SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
-COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
-COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
-COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
-DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", "We're a  software Agency in Greater Noida, India.")
-# The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
-DEMO_PHONE = _env("+91 6392449432")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
-PROOF_LINE = _env("It already answers calls for 6 clinics in Los Angeles.")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
-PRICE_LINE = _env("Our task is to make the product that can best million dollar System. this is we and we are defined for that.")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
+COMPANY_NAME = _env("COMPANY_NAME", "Independent Developer")
+COMPANY_PHONE = _env("COMPANY_PHONE")
+COMPANY_SITE = _env("COMPANY_WEBSITE")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS")  # Set only a real, deliverable business mailing address when legally required.
+DELIVERY_DAYS = _env("DELIVERY_DAYS")
+COMPANY_WHO = _env("COMPANY_WHO", "I'm an independent developer based in India.")
+# Optional proof, price, and demo details must be explicitly configured and factually true.
+DEMO_PHONE = _env("DEMO_PHONE")
+PROOF_LINE = _env("PROOF_LINE")
+PRICE_LINE = _env("PRICE_LINE")
 # What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
 # "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
 PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
@@ -817,7 +819,7 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
 
     if site == "none":
         pts += 3
-        facts["no_site"] = f"I couldn't find a website for {display_name(biz['name']) or 'your business'} on Google Maps."
+        facts["no_site"] = "I couldn't find a website listed with your business details."
     elif site == "ok":
         if not sig.get("chat"):
             pts += 2
@@ -989,11 +991,7 @@ HOOKS = {
         "Who answers the phone when the whole team is busy?",
     ],
 }
-WHO_VARIANTS = [                    # used only when COMPANY_WHO is not set; keeps the intro from being identical every time
-    "We're a 25-person software team in Greater Noida, India.",
-    "We're a small software team in Greater Noida, India.",
-    "Our team of 25 builds software from Greater Noida, India.",
-]
+WHO_VARIANTS = []  # Never invent team size, agency status, or location claims.
 INTROS = [
     "I'm {sender} from {company}. {who}",
     "My name is {sender}, from {company}. {who}",
@@ -1219,6 +1217,12 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
             problems.append(f"too similar to a recent email ({sim:.0%})")
         if subject.lower() in {r["subject"].lower() for r in _recent}:
             problems.append("subject already used")
+        evidence = safe_personalization([fact] if fact else [])
+        quality = review_email(subject, body, evidence=evidence, verified_claims=[x for x in (PROOF_LINE, PRICE_LINE) if x])
+        if not quality.passed:
+            problems.extend(quality.reasons)
+        if quality.warnings:
+            log.info("Email quality warnings: %s", "; ".join(quality.warnings))
         if not problems:
             return {"subject": subject, "core": core, "body": body, "source": "gemini"}
         log.warning(f"Rejected generated email (attempt {attempt + 1}): {'; '.join(problems)}")
@@ -1232,7 +1236,7 @@ def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
     fmt = {"name": nm, "customer": info["customer"], "call_for": info["call_for"]}
     hook = random.choice(HOOKS[angle]).format(**fmt)
     p1 = f"{fact} {hook}".strip() if fact else hook
-    who = COMPANY_WHO if _env("COMPANY_WHO") else random.choice(WHO_VARIANTS)
+    who = COMPANY_WHO
     intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
     a, b = pick_features(info)
     feats = random.choice(FEATURE_SENTENCES).format(a=a)
@@ -1258,7 +1262,13 @@ def fallback_email(biz: dict, angle: str, fact: str) -> dict:
             best, best_sim = mail, sim
         if sim < SIM_MAX:
             break
-    return best or compose_fallback(biz, angle, fact)
+    # Never bypass the safety review when all candidate drafts fail.
+    if best:
+        quality = review_email(best["subject"], best["body"], evidence=safe_personalization([fact] if fact else []),
+                               verified_claims=[x for x in (PROOF_LINE, PRICE_LINE) if x])
+        if quality.passed:
+            return best
+    return None
 
 
 def signature(country: str = "", followup: bool = False) -> str:
