@@ -4,7 +4,6 @@ on:
   schedule:
     # Daily at 6:00 AM IST (00:30 UTC)
     - cron: "30 0 * * *"
-
     # Daily at 6:00 PM IST (12:30 UTC)
     - cron: "30 12 * * *"
 
@@ -26,65 +25,73 @@ on:
         type: choice
         options: ["true", "false"]
 
-permissions:
-  contents: write              # needed to commit the logs back to the repo
-
 concurrency:
   group: outreach
   cancel-in-progress: false
 
 jobs:
-  send-outreach:
+  tests:
+    name: Compile and test
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    permissions:
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-
       - name: Install Dependencies
         run: pip install -r requirements.txt
-
       - name: Compile Python files
         run: python -m compileall -q mailor.py agentmailor tests
-
       - name: Run intelligence tests
         run: python -m unittest discover -s tests -v
 
+  send-outreach:
+    name: Outreach (non-PR events only)
+    if: github.event_name != 'pull_request'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
       - name: Run Outreach Script
-        if: github.event_name != 'pull_request'
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          # Optional: a proper sending service instead of Gmail (leave unset to use Gmail)
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-          # Scheduled runs are dry-run by default; manual runs follow the dry_run input.
+          # Scheduled runs default to dry-run. Manual runs follow the explicit input.
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'true' }}
-          # Live sends require both DRY_RUN=false and this explicit repo variable.
+          # Live sending requires BOTH DRY_RUN=false and this explicit repository variable.
           LIVE_OUTREACH_ENABLED: ${{ vars.LIVE_OUTREACH_ENABLED || 'false' }}
           FOLLOWUP_ENABLED: ${{ vars.FOLLOWUP_ENABLED || 'false' }}
           RESEARCH_SCORE_MIN: ${{ vars.RESEARCH_SCORE_MIN || '40' }}
           BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
           FORCE_RESUME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_resume || 'false' }}
           DAILY_LIMIT: "10"
-          # Only businesses scoring at least this on the "needs a call agent" fit score are contacted
           SCORE_MIN: ${{ vars.SCORE_MIN || '6' }}
-          # Bounce guard: pauses only after >= 30 sends AND >= 4 bounces AND rate above 15%. Tune via repo Variables.
           BOUNCE_PAUSE_RATE: ${{ vars.BOUNCE_PAUSE_RATE || '0.15' }}
           BOUNCE_MIN_SAMPLE: ${{ vars.BOUNCE_MIN_SAMPLE || '30' }}
           BOUNCE_MIN_COUNT: ${{ vars.BOUNCE_MIN_COUNT || '4' }}
-          # Repo Variables (Settings > Secrets and variables > Actions > Variables). All optional except COMPANY_ADDRESS for the US.
           COMPANY_ADDRESS: ${{ vars.COMPANY_ADDRESS }}
           SENDER_NAME: ${{ vars.SENDER_NAME }}
           COMPANY_NAME: ${{ vars.COMPANY_NAME }}
@@ -93,15 +100,14 @@ jobs:
           COMPANY_WHO: ${{ vars.COMPANY_WHO }}
           SERVICE_OFFERINGS: ${{ vars.SERVICE_OFFERINGS }}
           PRODUCT_FEATURES: ${{ vars.PRODUCT_FEATURES }}
-          # The three biggest reply-rate boosters (write TRUE lines only):
-          DEMO_PHONE: ${{ vars.DEMO_PHONE }}      # number owners can call to hear the AI receptionist
-          PROOF_LINE: ${{ vars.PROOF_LINE }}      # e.g. It already answers calls for 6 clinics in Delhi.
-          PRICE_LINE: ${{ vars.PRICE_LINE }}      # e.g. Plans start at Rs 2,999 a month.
+          DEMO_PHONE: ${{ vars.DEMO_PHONE }}
+          PROOF_LINE: ${{ vars.PROOF_LINE }}
+          PRICE_LINE: ${{ vars.PRICE_LINE }}
           DELIVERY_DAYS: "5-7 working days"
         run: python mailor.py
 
       - name: Save Logs (prevents emailing anyone twice)
-        if: always() && github.event_name != 'pull_request'
+        if: always()
         run: |
           git config user.name "agentmailor-bot"
           git config user.email "agentmailor-bot@users.noreply.github.com"
@@ -119,3 +125,4 @@ jobs:
             himalaya_outreach.log
             call_list.csv
           retention-days: 7
+          if-no-files-found: ignore
