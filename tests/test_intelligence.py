@@ -1,6 +1,6 @@
 import unittest
 
-from agentmailor.intelligence import qualification_decision, review_email, safe_personalization
+from agentmailor.intelligence import classify_reply, qualification_decision, review_email, safe_personalization
 
 
 class OutreachIntelligenceTests(unittest.TestCase):
@@ -34,6 +34,20 @@ class OutreachIntelligenceTests(unittest.TestCase):
         )
         self.assertFalse(allowed)
         self.assertIn("recipient is suppressed", reasons)
+
+    def test_optout_reply_takes_priority(self):
+        result = classify_reply("Re: AI receptionist", "Thanks, but please unsubscribe. Not interested.")
+        self.assertEqual(result["intent"], "optout")
+
+    def test_pricing_reply_needs_human(self):
+        result = classify_reply("", "Can you send me pricing and a quote?")
+        self.assertEqual(result["intent"], "pricing")
+        self.assertTrue(result["needs_human"])
+
+    def test_unclear_reply_needs_human(self):
+        result = classify_reply("", "Thanks for your message.")
+        self.assertEqual(result["intent"], "uncertain")
+        self.assertTrue(result["needs_human"])
 
     def test_evidence_snippets_are_cleaned_and_deduplicated(self):
         result = safe_personalization(["  Booking page  ", "Booking page", "", "Phone contact"])
