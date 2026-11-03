@@ -83,7 +83,7 @@ SMTP_USER = _env("SMTP_USER", EMAIL_USER)
 SMTP_PASS = _env("SMTP_PASS", EMAIL_PASS)
 FROM_EMAIL = _env("FROM_EMAIL", SMTP_USER)
 
-DRY_RUN = _env("DRY_RUN", "false").lower() == "true"
+DRY_RUN = _env("DRY_RUN", "true").lower() == "true"  # safe by default; set DRY_RUN=false explicitly to send
 BUSINESS_HOURS_ONLY = _env("BUSINESS_HOURS_ONLY", "true").lower() == "true"
 DAILY_LIMIT = int(_env("DAILY_LIMIT", "10"))            # new emails per UTC day (all runs together)
 FOLLOWUP_LIMIT = int(_env("FOLLOWUP_LIMIT", "10"))      # follow-ups per UTC day
@@ -1577,6 +1577,10 @@ def process_lead(biz: dict, suppressed: set) -> bool:
         return False
 
     mail = write_email(biz, angle, fact) or fallback_email(biz, angle, fact)
+    if mail is None:
+        log.warning("⏭️  %s: email rejected by quality checks; skipping rather than sending weak copy", key)
+        record({**base, "email": email, "main_issue": angle, "score": score, "status": "quality_rejected"})
+        return False
     body = mail["body"] + "\n" + signature(biz.get("country", ""))
 
     print("\n" + "=" * 60)
