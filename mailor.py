@@ -1177,8 +1177,8 @@ def write_email(biz: dict, angle: str, fact: str, research=None) -> Optional[dic
     a, b = pick_features(info)
     avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
     evidence_facts = research.observed_facts if research else ([fact] if fact else [])
-    evidence_text = "\\n".join(f"- {x}" for x in evidence_facts) or "- No verified business-specific evidence."
-    unknown_text = "\\n".join(f"- {x}" for x in (research.unknowns if research else [])) or "- No additional unknowns recorded."
+    evidence_text = "\n".join(f"- {x}" for x in evidence_facts) or "- No verified business-specific evidence."
+    unknown_text = "\n".join(f"- {x}" for x in (research.unknowns if research else [])) or "- No additional unknowns recorded."
     fact_rule = (f"Use at most ONE observation, only if it is directly supported by these facts: {evidence_text}"
                  if evidence_facts else "Do not make any business-specific observation or claim.")
     for attempt in range(3):
@@ -1197,7 +1197,7 @@ PARAGRAPH 1: {fact_rule}
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
 PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
   then say you build an AI receptionist for the phone: it {a} and {b}.
-  Make clear it is meant for the calls the team cannot get to and does not replace anyone.
+  Describe it as an optional way to handle routine enquiries or overflow; do not imply they currently miss calls or that it replaces staff.
 STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
@@ -1239,22 +1239,16 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
 
 
 def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
-    """Template email built from many interchangeable parts. Thousands of different combinations."""
+    """Conservative fallback: no invented pain point, urgency, or fake personalization."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
-    fmt = {"name": nm, "customer": info["customer"], "call_for": info["call_for"]}
-    hook = random.choice(HOOKS[angle]).format(**fmt)
-    p1 = f"{fact} {hook}".strip() if fact else hook
-    who = COMPANY_WHO
-    intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
-    a, b = pick_features(info)
-    feats = random.choice(FEATURE_SENTENCES).format(a=a)
-    if random.random() < 0.5:
-        feats += f" It also {b}."
-    timing = random.choice(TIMINGS).format(d=DELIVERY_DAYS)
-    p2 = " ".join(x for x in (intro, feats, random.choice(POSITIONING), timing) if x)
-    core = f"{p1}\n\n{p2}"
-    subject = random.choice(SUBJECTS[angle]).format(name=nm)
+    evidence = (fact.strip() + " ") if fact and fact.strip() else ""
+    intro = f"I'm {SENDER_NAME}, an independent developer based in India."
+    product = (f"I build an AI receptionist that can {info['does']}. "
+               "It can be considered for routine enquiries or overflow, while your team remains in control.")
+    core = (f"{evidence}If handling routine phone enquiries is something you're exploring, would a phone assistant be relevant? "
+            f"{intro} {product}")
+    subject = f"AI phone enquiries for {nm}"
     return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
 
 
