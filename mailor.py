@@ -1379,8 +1379,8 @@ def _reply_text(raw: bytes) -> str:
 
 
 def inbox_signals(targets: list) -> Optional[tuple]:
-    """targets: [(email, since_datetime)] -> (replied, bounced, optouts) or None if the inbox can't be read."""
-    replied, bounced, optouts = set(), set(), set()
+    """targets: [(email, since_datetime)] -> reply/bounce/opt-out sets and intent labels."""
+    replied, bounced, optouts, intents = set(), set(), set(), {}
     try:
         m = imaplib.IMAP4_SSL("imap.gmail.com", timeout=30)
         m.login(EMAIL_USER, EMAIL_PASS)
@@ -1394,16 +1394,19 @@ def inbox_signals(targets: list) -> Optional[tuple]:
                 replied.add(email)
                 try:
                     typ2, msgdata = m.fetch(data[0].split()[-1], "(BODY.PEEK[])")
-                    if typ2 == "OK" and msgdata and isinstance(msgdata[0], tuple) \
-                            and OPTOUT_RE.search(_reply_text(msgdata[0][1])):
-                        optouts.add(email)
+                    if typ2 == "OK" and msgdata and isinstance(msgdata[0], tuple):
+                        reply_body = _reply_text(msgdata[0][1])
+                        intent = classify_reply("", reply_body)
+                        intents[email] = intent
+                        if intent["intent"] == "optout" or OPTOUT_RE.search(reply_body):
+                            optouts.add(email)
                 except Exception as e:  # noqa: BLE001
                     log.warning(f"Could not read reply body from {email}: {e}")
             typ, data = m.search(None, f'(OR FROM "mailer-daemon" FROM "postmaster" SINCE {s} TEXT "{email}")')
             if typ == "OK" and data and data[0] and data[0].split():
                 bounced.add(email)
         m.logout()
-        return replied, bounced, optouts
+        return replied, bounced, optouts, intents
     except Exception as e:  # noqa: BLE001
         log.warning(f"Could not read inbox via IMAP ({e})")
         return None
@@ -1438,7 +1441,7 @@ def sync_inbox() -> Optional[dict]:
         signals = inbox_signals([(e, t) for _, t, e in pending if e])
         if signals is None:
             return None
-        replied, bounced, optouts = signals
+        replied, bounced, optouts, intents = signals
         for first, _, email in pending:
             base = {k: first.get(k, "") for k in BASE_KEYS}
             if email in bounced:
@@ -1450,8 +1453,10 @@ def sync_inbox() -> Optional[dict]:
                 add_suppression(email)
                 replied_n += 1
             elif email in replied:
-                log.info(f"💬 REPLY from {email} ({first.get('business')}), answer it!")
-                record({**base, "status": "replied"})
+                intent = intents.get(email, {"intent": "uncertain", "confidence": 0.0, "needs_human": True})
+                log.info("💬 Reply from %s (%s): intent=%s confidence=%.2f; human review=%s",
+                         email, first.get("business"), intent["intent"], intent["confidence"], intent["needs_human"])
+                record({**base, "status": "replied", "main_issue": f"reply_intent:{intent['intent']}"})
                 replied_n += 1
 
     rate = bounced_n / recent if recent else 0.0
