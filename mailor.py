@@ -45,6 +45,9 @@ from typing import Optional
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+from agentmailor.intelligence import classify_reply, review_email, safe_personalization
+from agentmailor.research import build_research_report, opportunity_score
+
 import dns.resolver
 import requests
 import urllib3
@@ -81,10 +84,12 @@ SMTP_USER = _env("SMTP_USER", EMAIL_USER)
 SMTP_PASS = _env("SMTP_PASS", EMAIL_PASS)
 FROM_EMAIL = _env("FROM_EMAIL", SMTP_USER)
 
-DRY_RUN = _env("DRY_RUN", "false").lower() == "true"
+DRY_RUN = _env("DRY_RUN", "true").lower() == "true"  # safe default
+LIVE_OUTREACH_ENABLED = _env("LIVE_OUTREACH_ENABLED", "false").lower() == "true"  # explicit extra safety gate
 BUSINESS_HOURS_ONLY = _env("BUSINESS_HOURS_ONLY", "true").lower() == "true"
 DAILY_LIMIT = int(_env("DAILY_LIMIT", "10"))            # new emails per UTC day (all runs together)
 FOLLOWUP_LIMIT = int(_env("FOLLOWUP_LIMIT", "10"))      # follow-ups per UTC day
+FOLLOWUP_ENABLED = _env("FOLLOWUP_ENABLED", "false").lower() == "true"  # opt-in only after reviewing follow-up copy
 MAX_COMBOS_PER_RUN = int(_env("MAX_COMBOS", "4"))
 LEADS_PER_SEARCH = int(_env("LEADS_PER_SEARCH", "25"))
 FOLLOWUP_AFTER_DAYS = int(_env("FOLLOWUP_AFTER_DAYS", "3"))
@@ -96,19 +101,20 @@ FORCE_RESUME = _env("FORCE_RESUME", "false").lower() == "true"
 MAX_RUNTIME_S = int(_env("MAX_RUNTIME_MIN", "40")) * 60  # stop early so the log always gets saved
 SLEEP_MIN, SLEEP_MAX = 60, 150                           # slower, human-like pacing helps deliverability
 WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
-SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
+SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # legacy category score
+RESEARCH_SCORE_MIN = int(_env("RESEARCH_SCORE_MIN", "40")) # evidence-based 0-100 opportunity score
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
-COMPANY_NAME = _env("COMPANY_NAME", "Patalganga Indus")
-COMPANY_PHONE = _env("COMPANY_PHONE", "+916302449432")
-COMPANY_SITE = _env("COMPANY_WEBSITE", "Patalganga.in")
-COMPANY_ADDRESS = _env("COMPANY_ADDRESS", "B-603,Casa Grande-1, Greater Noida, Prayagraj")   # repo Variable; REQUIRED to email US businesses (CAN-SPAM)
-DELIVERY_DAYS = _env("DELIVERY_DAYS", "5-7 working days")
-COMPANY_WHO = _env("COMPANY_WHO", "We're a  software Agency in Greater Noida, India.")
-# The three lines below are the biggest reply-rate boosters. They are written by YOU (never by the AI), so they must be true.
-DEMO_PHONE = _env("+91 6392449432")      # a number prospects can call to hear the AI receptionist answer (strongly recommended)
-PROOF_LINE = _env("It already answers calls for 6 clinics in Los Angeles.")      # one true sentence of proof, e.g. "It already answers calls for 6 clinics in Delhi."
-PRICE_LINE = _env("Our task is to make the product that can best million dollar System. this is we and we are defined for that.")      # one true sentence about price, e.g. "Plans start at Rs 2,999 a month."
+COMPANY_NAME = _env("COMPANY_NAME", "Independent Developer")
+COMPANY_PHONE = _env("COMPANY_PHONE")
+COMPANY_SITE = _env("COMPANY_WEBSITE")
+COMPANY_ADDRESS = _env("COMPANY_ADDRESS")  # Set only a real, deliverable business mailing address when legally required.
+DELIVERY_DAYS = _env("DELIVERY_DAYS")
+COMPANY_WHO = _env("COMPANY_WHO", "I'm an independent developer based in India.")
+# Optional proof, price, and demo details must be explicitly configured and factually true.
+DEMO_PHONE = _env("DEMO_PHONE")
+PROOF_LINE = _env("PROOF_LINE")
+PRICE_LINE = _env("PRICE_LINE")
 # What the agent can do (pipe-separated in the PRODUCT_FEATURES variable). Two random ones plus the business-specific
 # "does" line are used per email, so every email describes the product a bit differently. Only list things you really offer.
 PRODUCT_FEATURES = [f.strip() for f in _env("PRODUCT_FEATURES", "").split("|") if f.strip()] or [
@@ -817,7 +823,7 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
 
     if site == "none":
         pts += 3
-        facts["no_site"] = f"I couldn't find a website for {display_name(biz['name']) or 'your business'} on Google Maps."
+        facts["no_site"] = "I couldn't find a website listed with your business details."
     elif site == "ok":
         if not sig.get("chat"):
             pts += 2
@@ -839,7 +845,7 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
     elif reviews >= 30:
         pts += 1
     if reviews >= 30:
-        facts["busy"] = f"With {reviews} Google reviews, plenty of people clearly find you."
+        facts["busy"] = f"Your business listing has {reviews} Google reviews."
 
     for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
         if angle in facts:
@@ -989,11 +995,7 @@ HOOKS = {
         "Who answers the phone when the whole team is busy?",
     ],
 }
-WHO_VARIANTS = [                    # used only when COMPANY_WHO is not set; keeps the intro from being identical every time
-    "We're a 25-person software team in Greater Noida, India.",
-    "We're a small software team in Greater Noida, India.",
-    "Our team of 25 builds software from Greater Noida, India.",
-]
+WHO_VARIANTS = []  # Never invent team size, agency status, or location claims.
 INTROS = [
     "I'm {sender} from {company}. {who}",
     "My name is {sender}, from {company}. {who}",
@@ -1168,14 +1170,18 @@ def assemble(biz: dict, core: str) -> str:
     return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
 
 
-def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
+def write_email(biz: dict, angle: str, fact: str, research=None) -> Optional[dict]:
     """Gemini writes the opening and the pitch fresh for every business. Rejected if spammy or too similar to a recent email."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
     hook_hint = random.choice(HOOKS[angle]).format(name=nm, customer=info["customer"], call_for=info["call_for"])
     a, b = pick_features(info)
     avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
-    fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
+    evidence_facts = research.observed_facts if research else ([fact] if fact else [])
+    evidence_text = "\n".join(f"- {x}" for x in evidence_facts) or "- No verified business-specific evidence."
+    unknown_text = "\n".join(f"- {x}" for x in (research.unknowns if research else [])) or "- No additional unknowns recorded."
+    fact_rule = (f"Use at most ONE observation, only if it is directly supported by these facts: {evidence_text}"
+                 if evidence_facts else "Do not make any business-specific observation or claim.")
     for attempt in range(3):
         prompt = f"""
 Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the owner of "{nm}"
@@ -1185,12 +1191,14 @@ The greeting, the call to action and the signature are added automatically: do N
 Write exactly two short paragraphs, 45 to 80 words in total, plain text, no markdown, no emojis, no links.
 
 PARAGRAPH 1: {fact_rule}
-  Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
-  Hook idea (rephrase in your own words): {hook_hint}
+  Do NOT assume they miss calls, lose revenue, have busy phones, or need help. Ask a low-pressure, conditional question about whether managing routine phone enquiries is relevant.
+  Research confidence: {research.evidence_confidence if research else "unknown"}.
+  Research unknowns (never present as facts): {unknown_text}
+  Business-specific angle to consider: {research.recommended_angle if research else angle}.
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
 PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
   then say you build an AI receptionist for the phone: it {a} and {b}.
-  Make clear it is meant for the calls the team cannot get to and does not replace anyone.
+  Describe it as an optional way to handle routine enquiries or overflow; do not imply they currently miss calls or that it replaces staff.
 STYLE FOR THIS EMAIL: {random.choice(STYLES)}
 
 RULES:
@@ -1219,6 +1227,12 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
             problems.append(f"too similar to a recent email ({sim:.0%})")
         if subject.lower() in {r["subject"].lower() for r in _recent}:
             problems.append("subject already used")
+        evidence = safe_personalization([fact] if fact else [])
+        quality = review_email(subject, body, evidence=evidence, verified_claims=[x for x in (PROOF_LINE, PRICE_LINE) if x])
+        if not quality.passed:
+            problems.extend(quality.reasons)
+        if quality.warnings:
+            log.info("Email quality warnings: %s", "; ".join(quality.warnings))
         if not problems:
             return {"subject": subject, "core": core, "body": body, "source": "gemini"}
         log.warning(f"Rejected generated email (attempt {attempt + 1}): {'; '.join(problems)}")
@@ -1226,22 +1240,16 @@ Return ONLY JSON: {{"subject": "...", "body": "..."}}
 
 
 def compose_fallback(biz: dict, angle: str, fact: str) -> dict:
-    """Template email built from many interchangeable parts. Thousands of different combinations."""
+    """Conservative fallback: no invented pain point, urgency, or fake personalization."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
-    fmt = {"name": nm, "customer": info["customer"], "call_for": info["call_for"]}
-    hook = random.choice(HOOKS[angle]).format(**fmt)
-    p1 = f"{fact} {hook}".strip() if fact else hook
-    who = COMPANY_WHO if _env("COMPANY_WHO") else random.choice(WHO_VARIANTS)
-    intro = random.choice(INTROS).format(sender=SENDER_NAME, company=COMPANY_NAME, who=who)
-    a, b = pick_features(info)
-    feats = random.choice(FEATURE_SENTENCES).format(a=a)
-    if random.random() < 0.5:
-        feats += f" It also {b}."
-    timing = random.choice(TIMINGS).format(d=DELIVERY_DAYS)
-    p2 = " ".join(x for x in (intro, feats, random.choice(POSITIONING), timing) if x)
-    core = f"{p1}\n\n{p2}"
-    subject = random.choice(SUBJECTS[angle]).format(name=nm)
+    evidence = (fact.strip() + " ") if fact and fact.strip() else ""
+    intro = f"I'm {SENDER_NAME}, an independent developer based in India."
+    product = (f"I build an AI receptionist that can {info['does']}. "
+               "It can be considered for routine enquiries or overflow, while your team remains in control.")
+    core = (f"{evidence}If handling routine phone enquiries is something you're exploring, would a phone assistant be relevant? "
+            f"{intro} {product}")
+    subject = f"AI phone enquiries for {nm}"
     return {"subject": subject[:55], "core": core, "body": assemble(biz, core), "source": "template"}
 
 
@@ -1258,7 +1266,13 @@ def fallback_email(biz: dict, angle: str, fact: str) -> dict:
             best, best_sim = mail, sim
         if sim < SIM_MAX:
             break
-    return best or compose_fallback(biz, angle, fact)
+    # Never bypass the safety review when all candidate drafts fail.
+    if best:
+        quality = review_email(best["subject"], best["body"], evidence=safe_personalization([fact] if fact else []),
+                               verified_claims=[x for x in (PROOF_LINE, PRICE_LINE) if x])
+        if quality.passed:
+            return best
+    return None
 
 
 def signature(country: str = "", followup: bool = False) -> str:
@@ -1309,6 +1323,10 @@ def check_sender_auth() -> None:
 # SENDING
 # ─────────────────────────────────────────────
 def send_email(to_email: str, subject: str, body: str, in_reply_to: Optional[str] = None) -> Optional[str]:
+    """Send only when both live-send safety switches are explicitly enabled."""
+    if DRY_RUN or not LIVE_OUTREACH_ENABLED:
+        log.error("Blocked SMTP send: DRY_RUN must be false and LIVE_OUTREACH_ENABLED must be true.")
+        return None
     msg = MIMEMultipart()
     msg["From"] = formataddr((f"{SENDER_NAME} | {COMPANY_NAME}", FROM_EMAIL))
     msg["To"] = to_email
@@ -1368,8 +1386,8 @@ def _reply_text(raw: bytes) -> str:
 
 
 def inbox_signals(targets: list) -> Optional[tuple]:
-    """targets: [(email, since_datetime)] -> (replied, bounced, optouts) or None if the inbox can't be read."""
-    replied, bounced, optouts = set(), set(), set()
+    """targets: [(email, since_datetime)] -> reply/bounce/opt-out sets and intent labels."""
+    replied, bounced, optouts, intents = set(), set(), set(), {}
     try:
         m = imaplib.IMAP4_SSL("imap.gmail.com", timeout=30)
         m.login(EMAIL_USER, EMAIL_PASS)
@@ -1383,16 +1401,19 @@ def inbox_signals(targets: list) -> Optional[tuple]:
                 replied.add(email)
                 try:
                     typ2, msgdata = m.fetch(data[0].split()[-1], "(BODY.PEEK[])")
-                    if typ2 == "OK" and msgdata and isinstance(msgdata[0], tuple) \
-                            and OPTOUT_RE.search(_reply_text(msgdata[0][1])):
-                        optouts.add(email)
+                    if typ2 == "OK" and msgdata and isinstance(msgdata[0], tuple):
+                        reply_body = _reply_text(msgdata[0][1])
+                        intent = classify_reply("", reply_body)
+                        intents[email] = intent
+                        if intent["intent"] == "optout" or OPTOUT_RE.search(reply_body):
+                            optouts.add(email)
                 except Exception as e:  # noqa: BLE001
                     log.warning(f"Could not read reply body from {email}: {e}")
             typ, data = m.search(None, f'(OR FROM "mailer-daemon" FROM "postmaster" SINCE {s} TEXT "{email}")')
             if typ == "OK" and data and data[0] and data[0].split():
                 bounced.add(email)
         m.logout()
-        return replied, bounced, optouts
+        return replied, bounced, optouts, intents
     except Exception as e:  # noqa: BLE001
         log.warning(f"Could not read inbox via IMAP ({e})")
         return None
@@ -1427,7 +1448,7 @@ def sync_inbox() -> Optional[dict]:
         signals = inbox_signals([(e, t) for _, t, e in pending if e])
         if signals is None:
             return None
-        replied, bounced, optouts = signals
+        replied, bounced, optouts, intents = signals
         for first, _, email in pending:
             base = {k: first.get(k, "") for k in BASE_KEYS}
             if email in bounced:
@@ -1439,8 +1460,10 @@ def sync_inbox() -> Optional[dict]:
                 add_suppression(email)
                 replied_n += 1
             elif email in replied:
-                log.info(f"💬 REPLY from {email} ({first.get('business')}), answer it!")
-                record({**base, "status": "replied"})
+                intent = intents.get(email, {"intent": "uncertain", "confidence": 0.0, "needs_human": True})
+                log.info("💬 Reply from %s (%s): intent=%s confidence=%.2f; human review=%s",
+                         email, first.get("business"), intent["intent"], intent["confidence"], intent["needs_human"])
+                record({**base, "status": "replied", "main_issue": f"reply_intent:{intent['intent']}"})
                 replied_n += 1
 
     rate = bounced_n / recent if recent else 0.0
@@ -1461,8 +1484,8 @@ def followup_body(row: dict) -> str:
            if DEMO_PHONE else f"If you'd like to hear it, reply \"yes\" and I'll set up a short demo.")
     return (
         f"{greeting(nm)}\n\n"
-        "In case my earlier note got buried: I make an AI receptionist for the phone. It picks up the calls your team "
-        f"can't get to and {does}.\n\n"
+        "Just following up once on my note about an optional AI receptionist for routine phone enquiries or overflow. "
+        "I do not know whether this is a current need for your business, so please ignore this if it is not relevant.\n\n"
         f"{ask}\n"
     )
 
@@ -1543,36 +1566,71 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     email = pick_api_email(biz.get("api_emails"), biz["city"], host)
     if not email and r is not None:
         email = find_public_email(host, r)
-    add_call_lead(biz, base["website"] or key, phone, email, angle, score, fact)      # even when we have no email
 
+    email_problem = ""
+    if email:
+        dom = email.split("@")[-1]
+        if email in suppressed or dom in suppressed:
+            log.info("⏭️  %s: email/domain is suppressed; skipping", key)
+            return False
+        if biz.get("country") in STRICT_COUNTRIES and dom in FREE_MAIL:
+            email_problem = f"private address ({email}) in {biz.get('country')}; not used without consent"
+            email = None
+        elif email in _seen_emails:
+            record({**base, "email": email, "main_issue": angle, "score": score, "status": "dup_email"})
+            return False
+
+    email_verified = False
+    if email:
+        ok, reason = verify_email(email)
+        if ok:
+            email_verified = True
+        else:
+            email_problem = f"{email} failed verification ({reason})"
+            email = None
+
+    research = build_research_report(
+        business_name=biz.get("name", ""), category=biz["category"], website_status=site,
+        signals=sig, hours_fact=hours_fact(hrs), review_count=int(biz.get("reviews") or 0),
+        category_fit=CATEGORIES[biz["category"]]["weight"])
+    fit_score, fit_reasons = opportunity_score(
+        category_weight=CATEGORIES[biz["category"]]["weight"], research=research,
+        phone_present=bool(phone), email_present=bool(email), email_verified=email_verified,
+        suppressed=False, already_contacted=False)
+    log.info("🧠 Research score=%s confidence=%s angle=%s reasons=%s",
+             fit_score, research.evidence_confidence, research.recommended_angle, "; ".join(fit_reasons))
+    if fit_score < RESEARCH_SCORE_MIN:
+        log.info("⏭️  %s: research score %s < threshold %s", key, fit_score, RESEARCH_SCORE_MIN)
+        record({**base, "email": email or "", "main_issue": research.recommended_angle,
+                "score": fit_score, "status": "low_research_fit"})
+        return False
+
+    # Only research-qualified prospects enter the manual call/WhatsApp list.
+    call_notes = "; ".join(research.observed_facts) or "No verified business-specific observation."
+    add_call_lead(biz, base["website"] or key, phone, email or "", research.recommended_angle, fit_score, call_notes)
+
+    if email_problem:
+        log.info("⏭️  %s: %s", key, email_problem)
+        status = "no_email" if "not used without consent" in email_problem else "bad_email"
+        record({**base, "email": "", "main_issue": research.recommended_angle, "score": fit_score, "status": status})
+        return False
     if not email:
-        log.info(f"⏭️  {key}: no usable email (call list entry saved)")
-        record({**base, "main_issue": angle, "score": score, "status": "no_email"})
-        return False
-    dom = email.split("@")[-1]
-    if email in suppressed or dom in suppressed:
-        return False
-    if biz.get("country") in STRICT_COUNTRIES and dom in FREE_MAIL:
-        log.info(f"⏭️  {key}: private address ({email}) in {biz.get('country')}, not allowed without consent")
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "no_email"})
-        return False
-    if email in _seen_emails:
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "dup_email"})
+        log.info(f"⏭️  {key}: no usable email (research-qualified phone lead saved)")
+        record({**base, "main_issue": research.recommended_angle, "score": fit_score, "status": "no_email"})
         return False
 
-    ok, reason = verify_email(email)
-    if not ok:
-        log.info(f"⏭️  {key}: {email} failed verification ({reason})")
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "bad_email"})
+    mail = write_email(biz, angle, fact, research=research) or fallback_email(biz, angle, fact)
+    if mail is None:
+        log.warning("⏭️  %s: email rejected by quality checks; skipping rather than sending weak copy", key)
+        record({**base, "email": email, "main_issue": angle, "score": score, "status": "quality_rejected"})
         return False
-
-    mail = write_email(biz, angle, fact) or fallback_email(biz, angle, fact)
     body = mail["body"] + "\n" + signature(biz.get("country", ""))
 
     print("\n" + "=" * 60)
     print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {base['website'] or 'no website'}  [{biz.get('source', '')}]")
     print(f"📧 {email}   📌 {mail['subject']}   🎯 score {score} / {angle}   ✍️ {mail.get('source', '')}")
-    print(f"🔬 Fact used: {fact}")
+    print(f"🔬 Evidence used: {research.observed_facts}")
+    print(f"🧠 Research confidence: {research.evidence_confidence}; unknowns: {research.unknowns}")
     print(body)
     print("=" * 60)
 
@@ -1606,7 +1664,8 @@ def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reaso
              f"| New emails {'drafted' if DRY_RUN else 'sent'} | {done} |",
              f"| Follow-ups sent | {followups} |",
              f"| Daily cap (warm-up aware) | {cap} (slots left at start: {remaining}) |",
-             f"| Minimum fit score | {SCORE_MIN} |",
+             f"| Legacy minimum fit score | {SCORE_MIN} |",
+             f"| Research opportunity threshold | {RESEARCH_SCORE_MIN}/100 |",
              f"| City/category searches picked | {n_combos} |",
              f"| RapidAPI calls today | {usage.get('calls', 0)} |"]
     if stats:
@@ -1624,6 +1683,8 @@ def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reaso
 # MAIN
 # ─────────────────────────────────────────────
 def main() -> None:
+    if not DRY_RUN and not LIVE_OUTREACH_ENABLED:
+        raise SystemExit("Live sending is disabled. Set LIVE_OUTREACH_ENABLED=true only after reviewing compliance, sender identity, and test results.")
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
@@ -1663,7 +1724,10 @@ def main() -> None:
                 log.error(f"🛑 PAUSED: bounce rate {stats['bounce_rate']:.0%} ({stats['bounced']}/{stats['recent_sent']}) is above "
                           f"{BOUNCE_PAUSE_RATE:.0%}. No new emails until it recovers. Override: FORCE_RESUME=true")
             suppressed = load_suppressed()            # opt-outs found during the sync apply immediately
-            followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
+            if FOLLOWUP_ENABLED:
+                followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
+            else:
+                log.info("Follow-ups are disabled by default; set FOLLOWUP_ENABLED=true only after reviewing the copy.")
 
     remaining = eff_limit - (0 if DRY_RUN else count_today(rows, "sent"))
     if paused or remaining <= 0:
