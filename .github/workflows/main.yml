@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run (write emails but do NOT send)"
+        description: "Dry run (write emails but do NOT send; recommended)"
         required: false
-        default: "false"
+        default: "true"
         type: choice
         options: ["true", "false"]
       force_resume:
@@ -60,7 +60,9 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           # Scheduled runs send for real; manual runs follow the dry_run input and ignore local business hours
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'true' }}
+          # Live sends require both DRY_RUN=false and this explicit repo variable.
+          LIVE_OUTREACH_ENABLED: ${{ vars.LIVE_OUTREACH_ENABLED || 'false' }}
           BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
           FORCE_RESUME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_resume || 'false' }}
           DAILY_LIMIT: "10"
