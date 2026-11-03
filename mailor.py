@@ -842,7 +842,7 @@ def score_lead(biz: dict, site: str, sig: dict, hrs: dict) -> tuple:
     elif reviews >= 30:
         pts += 1
     if reviews >= 30:
-        facts["busy"] = f"With {reviews} Google reviews, plenty of people clearly find you."
+        facts["busy"] = f"Your business listing has {reviews} Google reviews."
 
     for angle in ("after_hours", "no_site", "busy", "no_chat"):     # strongest hook first
         if angle in facts:
