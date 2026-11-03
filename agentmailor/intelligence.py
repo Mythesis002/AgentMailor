@@ -148,3 +148,40 @@ def qualification_decision(*, score: float, threshold: float, evidence_confidenc
     if score < threshold:
         reasons.append("opportunity score below threshold")
     return not reasons, reasons
+
+
+# Reply intent classification. Opt-out signals take precedence over sales intent.
+REPLY_PATTERNS = {
+    "optout": r"\\b(?:unsubscribe|remove me|stop emailing|stop contacting|do not email|don't email|opt out)\\b",
+    "not_interested": r"\\b(?:not interested|no thanks|not for us|we're not looking|we are not looking|no need)\\b",
+    "wrong_person": r"\\b(?:wrong person|not the right person|contact .* instead|no longer responsible)\\b",
+    "out_of_office": r"\\b(?:out of office|away from the office|on leave|returning on)\\b",
+    "pricing": r"\\b(?:price|pricing|cost|how much|quote|rates|budget)\\b",
+    "demo": r"\\b(?:demo|demonstration|try it|hear it|see it in action)\\b",
+    "interested": r"\\b(?:interested|tell me more|sounds good|let's discuss|lets discuss|book a call|schedule a call)\\b",
+}
+
+
+def classify_reply(subject: str, body: str) -> dict[str, Any]:
+    """Classify a reply conservatively; opt-out wins over all positive intent."""
+    text = normalize_text(f"{subject} {body}").lower()
+    for label in ("optout", "not_interested", "wrong_person", "out_of_office",
+                  "pricing", "demo", "interested"):
+        if re.search(REPLY_PATTERNS[label], text, re.I):
+            return {"intent": label, "confidence": 0.85, "needs_human": label in {"pricing", "demo", "interested", "wrong_person"}}
+    return {"intent": "uncertain", "confidence": 0.35, "needs_human": True}
+
+
+def evidence_confidence(*, website_checked: bool, source_verified: bool,
+                        direct_observation_count: int, data_age_days: int | None = None) -> float:
+    """Transparent confidence heuristic. It is not an ML probability."""
+    score = 0.0
+    score += 0.30 if source_verified else 0.0
+    score += 0.30 if website_checked else 0.0
+    score += min(max(direct_observation_count, 0), 3) * 0.10
+    if data_age_days is not None:
+        if data_age_days > 180:
+            score -= 0.20
+        elif data_age_days > 90:
+            score -= 0.10
+    return round(min(1.0, max(0.0, score)), 2)
