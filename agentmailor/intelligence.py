@@ -154,13 +154,13 @@ def qualification_decision(*, score: float, threshold: float, evidence_confidenc
 
 # Reply intent classification. Opt-out signals take precedence over sales intent.
 REPLY_PATTERNS = {
-    "optout": r"\\b(?:unsubscribe|remove me|stop emailing|stop contacting|do not email|don't email|opt out)\\b",
-    "not_interested": r"\\b(?:not interested|no thanks|not for us|we're not looking|we are not looking|no need)\\b",
-    "wrong_person": r"\\b(?:wrong person|not the right person|contact .* instead|no longer responsible)\\b",
-    "out_of_office": r"\\b(?:out of office|away from the office|on leave|returning on)\\b",
-    "pricing": r"\\b(?:price|pricing|cost|how much|quote|rates|budget)\\b",
-    "demo": r"\\b(?:demo|demonstration|try it|hear it|see it in action)\\b",
-    "interested": r"\\b(?:interested|tell me more|sounds good|let's discuss|lets discuss|book a call|schedule a call)\\b",
+    "optout": r"\b(?:unsubscribe|remove me|stop emailing|stop contacting|do not email|don't email|opt out)\b",
+    "not_interested": r"\b(?:not interested|no thanks|not for us|we're not looking|we are not looking|no need)\b",
+    "wrong_person": r"\b(?:wrong person|not the right person|contact .* instead|no longer responsible)\b",
+    "out_of_office": r"\b(?:out of office|away from the office|on leave|returning on)\b",
+    "pricing": r"\b(?:price|pricing|cost|how much|quote|rates|budget)\b",
+    "demo": r"\b(?:demo|demonstration|try it|hear it|see it in action)\b",
+    "interested": r"\b(?:interested|tell me more|sounds good|let's discuss|lets discuss|book a call|schedule a call)\b",
 }
 
 
