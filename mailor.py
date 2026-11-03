@@ -46,6 +46,7 @@ from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
 from agentmailor.intelligence import classify_reply, review_email, safe_personalization
+from agentmailor.research import build_research_report, opportunity_score
 
 import dns.resolver
 import requests
@@ -1167,14 +1168,18 @@ def assemble(biz: dict, core: str) -> str:
     return f"{greeting(nm)}\n\n{core}\n\n{closing_block(nm, CATEGORIES[biz['category']])}"
 
 
-def write_email(biz: dict, angle: str, fact: str) -> Optional[dict]:
+def write_email(biz: dict, angle: str, fact: str, research=None) -> Optional[dict]:
     """Gemini writes the opening and the pitch fresh for every business. Rejected if spammy or too similar to a recent email."""
     info = CATEGORIES[biz["category"]]
     nm = display_name(biz["name"]) or "your business"
     hook_hint = random.choice(HOOKS[angle]).format(name=nm, customer=info["customer"], call_for=info["call_for"])
     a, b = pick_features(info)
     avoid = "\n".join(f"- {r['subject']}  |  {' '.join(r['body'].split()[:14])}..." for r in _recent[-5:]) or "- (none)"
-    fact_rule = f"Include this fact once, in one sentence (rephrase lightly): {fact}" if fact else "Do not state any fact about their business."
+    evidence_facts = research.observed_facts if research else ([fact] if fact else [])
+    evidence_text = "\\n".join(f"- {x}" for x in evidence_facts) or "- No verified business-specific evidence."
+    unknown_text = "\\n".join(f"- {x}" for x in (research.unknowns if research else [])) or "- No additional unknowns recorded."
+    fact_rule = (f"Use at most ONE observation, only if it is directly supported by these facts: {evidence_text}"
+                 if evidence_facts else "Do not make any business-specific observation or claim.")
     for attempt in range(3):
         prompt = f"""
 Write the BODY of a short cold email from {SENDER_NAME} of {COMPANY_NAME} to the owner of "{nm}"
@@ -1184,8 +1189,10 @@ The greeting, the call to action and the signature are added automatically: do N
 Write exactly two short paragraphs, 45 to 80 words in total, plain text, no markdown, no emojis, no links.
 
 PARAGRAPH 1: {fact_rule}
-  Then a hooking question about calls from a {info['customer']} who wants to {info['call_for']} going unanswered.
-  Hook idea (rephrase in your own words): {hook_hint}
+  Do NOT assume they miss calls, lose revenue, have busy phones, or need help. Ask a low-pressure, conditional question about whether managing routine phone enquiries is relevant.
+  Research confidence: {research.evidence_confidence if research else "unknown"}.
+  Research unknowns (never present as facts): {unknown_text}
+  Business-specific angle to consider: {research.recommended_angle if research else angle}.
   Do not repeat the business name more than once in the whole text (the greeting already uses it).
 PARAGRAPH 2: one sentence on who you are ("I'm {SENDER_NAME} from {COMPANY_NAME}. {COMPANY_WHO}"),
   then say you build an AI receptionist for the phone: it {a} and {b}.
@@ -1582,7 +1589,23 @@ def process_lead(biz: dict, suppressed: set) -> bool:
         record({**base, "email": email, "main_issue": angle, "score": score, "status": "bad_email"})
         return False
 
-    mail = write_email(biz, angle, fact) or fallback_email(biz, angle, fact)
+    research = build_research_report(
+        business_name=biz.get("name", ""), category=biz["category"], website_status=site,
+        signals=sig, hours_fact=hours_fact(hrs), review_count=int(biz.get("reviews") or 0),
+        category_fit=CATEGORIES[biz["category"]]["weight"])
+    fit_score, fit_reasons = opportunity_score(
+        category_weight=CATEGORIES[biz["category"]]["weight"], research=research,
+        phone_present=bool(phone), email_present=bool(email), email_verified=True,
+        suppressed=(email in suppressed or dom in suppressed) if email else False,
+        already_contacted=(email in _seen_emails) if email else False)
+    log.info("🧠 Research score=%s confidence=%s angle=%s reasons=%s",
+             fit_score, research.evidence_confidence, research.recommended_angle, "; ".join(fit_reasons))
+    if fit_score < SCORE_MIN:
+        record({**base, "email": email or "", "main_issue": research.recommended_angle,
+                "score": fit_score, "status": "low_research_fit"})
+        return False
+
+    mail = write_email(biz, angle, fact, research=research) or fallback_email(biz, angle, fact)
     if mail is None:
         log.warning("⏭️  %s: email rejected by quality checks; skipping rather than sending weak copy", key)
         record({**base, "email": email, "main_issue": angle, "score": score, "status": "quality_rejected"})
@@ -1592,7 +1615,8 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     print("\n" + "=" * 60)
     print(f"🏢 {biz['name']} ({biz['city']}, {biz.get('country', '')})  🌐 {base['website'] or 'no website'}  [{biz.get('source', '')}]")
     print(f"📧 {email}   📌 {mail['subject']}   🎯 score {score} / {angle}   ✍️ {mail.get('source', '')}")
-    print(f"🔬 Fact used: {fact}")
+    print(f"🔬 Evidence used: {research.observed_facts}")
+    print(f"🧠 Research confidence: {research.evidence_confidence}; unknowns: {research.unknowns}")
     print(body)
     print("=" * 60)
 
