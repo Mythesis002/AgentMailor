@@ -89,6 +89,7 @@ LIVE_OUTREACH_ENABLED = _env("LIVE_OUTREACH_ENABLED", "false").lower() == "true"
 BUSINESS_HOURS_ONLY = _env("BUSINESS_HOURS_ONLY", "true").lower() == "true"
 DAILY_LIMIT = int(_env("DAILY_LIMIT", "10"))            # new emails per UTC day (all runs together)
 FOLLOWUP_LIMIT = int(_env("FOLLOWUP_LIMIT", "10"))      # follow-ups per UTC day
+FOLLOWUP_ENABLED = _env("FOLLOWUP_ENABLED", "false").lower() == "true"  # opt-in only after reviewing follow-up copy
 MAX_COMBOS_PER_RUN = int(_env("MAX_COMBOS", "4"))
 LEADS_PER_SEARCH = int(_env("LEADS_PER_SEARCH", "25"))
 FOLLOWUP_AFTER_DAYS = int(_env("FOLLOWUP_AFTER_DAYS", "3"))
@@ -1322,6 +1323,10 @@ def check_sender_auth() -> None:
 # SENDING
 # ─────────────────────────────────────────────
 def send_email(to_email: str, subject: str, body: str, in_reply_to: Optional[str] = None) -> Optional[str]:
+    """Send only when both live-send safety switches are explicitly enabled."""
+    if DRY_RUN or not LIVE_OUTREACH_ENABLED:
+        log.error("Blocked SMTP send: DRY_RUN must be false and LIVE_OUTREACH_ENABLED must be true.")
+        return None
     msg = MIMEMultipart()
     msg["From"] = formataddr((f"{SENDER_NAME} | {COMPANY_NAME}", FROM_EMAIL))
     msg["To"] = to_email
@@ -1479,8 +1484,8 @@ def followup_body(row: dict) -> str:
            if DEMO_PHONE else f"If you'd like to hear it, reply \"yes\" and I'll set up a short demo.")
     return (
         f"{greeting(nm)}\n\n"
-        "In case my earlier note got buried: I make an AI receptionist for the phone. It picks up the calls your team "
-        f"can't get to and {does}.\n\n"
+        "Just following up once on my note about an optional AI receptionist for routine phone enquiries or overflow. "
+        "I do not know whether this is a current need for your business, so please ignore this if it is not relevant.\n\n"
         f"{ask}\n"
     )
 
@@ -1706,7 +1711,10 @@ def main() -> None:
                 log.error(f"🛑 PAUSED: bounce rate {stats['bounce_rate']:.0%} ({stats['bounced']}/{stats['recent_sent']}) is above "
                           f"{BOUNCE_PAUSE_RATE:.0%}. No new emails until it recovers. Override: FORCE_RESUME=true")
             suppressed = load_suppressed()            # opt-outs found during the sync apply immediately
-            followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
+            if FOLLOWUP_ENABLED:
+                followups = run_followups(suppressed, min(FOLLOWUP_LIMIT, eff_limit) - count_today(rows, "followup_sent"))
+            else:
+                log.info("Follow-ups are disabled by default; set FOLLOWUP_ENABLED=true only after reviewing the copy.")
 
     remaining = eff_limit - (0 if DRY_RUN else count_today(rows, "sent"))
     if paused or remaining <= 0:
