@@ -8,6 +8,9 @@ on:
     # Daily at 6:00 PM IST (12:30 UTC)
     - cron: "30 12 * * *"
 
+  pull_request:
+    branches: [main]
+
   workflow_dispatch:
     inputs:
       dry_run:
@@ -48,10 +51,14 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      - name: Compile Python files
+        run: python -m compileall -q mailor.py agentmailor tests
+
       - name: Run intelligence tests
         run: python -m unittest discover -s tests -v
 
       - name: Run Outreach Script
+        if: github.event_name != 'pull_request'
         env:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -62,10 +69,12 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-          # Scheduled runs send for real; manual runs follow the dry_run input and ignore local business hours
+          # Scheduled runs are dry-run by default; manual runs follow the dry_run input.
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'true' }}
           # Live sends require both DRY_RUN=false and this explicit repo variable.
           LIVE_OUTREACH_ENABLED: ${{ vars.LIVE_OUTREACH_ENABLED || 'false' }}
+          FOLLOWUP_ENABLED: ${{ vars.FOLLOWUP_ENABLED || 'false' }}
+          RESEARCH_SCORE_MIN: ${{ vars.RESEARCH_SCORE_MIN || '40' }}
           BUSINESS_HOURS_ONLY: ${{ github.event_name == 'workflow_dispatch' && 'false' || 'true' }}
           FORCE_RESUME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_resume || 'false' }}
           DAILY_LIMIT: "10"
@@ -92,7 +101,7 @@ jobs:
         run: python mailor.py
 
       - name: Save Logs (prevents emailing anyone twice)
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         run: |
           git config user.name "agentmailor-bot"
           git config user.email "agentmailor-bot@users.noreply.github.com"
