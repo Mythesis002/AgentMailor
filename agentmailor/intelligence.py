@@ -106,7 +106,9 @@ def review_email(subject: str, body: str, *, evidence: Iterable[str] = (),
         body, re.I,
     )
     if numeric_claims:
-        if not any(claim.lower() in text.lower() for claim in verified_l):
+        # Numbers grounded in stored business evidence are allowed; proof/pricing
+        # claims still require explicit owner-provided verification.
+        if not any(claim.lower() in text.lower() for claim in verified_l + evidence_l):
             reasons.append("unverified numeric claim")
 
     # A natural cold email should have one clear ask, not a sequence of asks.
