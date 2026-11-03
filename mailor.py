@@ -100,7 +100,8 @@ FORCE_RESUME = _env("FORCE_RESUME", "false").lower() == "true"
 MAX_RUNTIME_S = int(_env("MAX_RUNTIME_MIN", "40")) * 60  # stop early so the log always gets saved
 SLEEP_MIN, SLEEP_MAX = 60, 150                           # slower, human-like pacing helps deliverability
 WARMUP = _env("WARMUP", "true").lower() == "true"        # ramp volume up slowly: 3/day, 5, 8, then DAILY_LIMIT
-SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # minimum "needs a call agent" score to contact a business
+SCORE_MIN = int(_env("SCORE_MIN", "6"))                  # legacy category score
+RESEARCH_SCORE_MIN = int(_env("RESEARCH_SCORE_MIN", "40")) # evidence-based 0-100 opportunity score
 
 SENDER_NAME = _env("SENDER_NAME", "Ashish")
 COMPANY_NAME = _env("COMPANY_NAME", "Independent Developer")
@@ -1600,7 +1601,8 @@ def process_lead(biz: dict, suppressed: set) -> bool:
         already_contacted=(email in _seen_emails) if email else False)
     log.info("🧠 Research score=%s confidence=%s angle=%s reasons=%s",
              fit_score, research.evidence_confidence, research.recommended_angle, "; ".join(fit_reasons))
-    if fit_score < SCORE_MIN:
+    if fit_score < RESEARCH_SCORE_MIN:
+        log.info("⏭️  %s: research score %s < threshold %s", key, fit_score, RESEARCH_SCORE_MIN)
         record({**base, "email": email or "", "main_issue": research.recommended_angle,
                 "score": fit_score, "status": "low_research_fit"})
         return False
@@ -1650,7 +1652,8 @@ def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reaso
              f"| New emails {'drafted' if DRY_RUN else 'sent'} | {done} |",
              f"| Follow-ups sent | {followups} |",
              f"| Daily cap (warm-up aware) | {cap} (slots left at start: {remaining}) |",
-             f"| Minimum fit score | {SCORE_MIN} |",
+             f"| Legacy minimum fit score | {SCORE_MIN} |",
+             f"| Research opportunity threshold | {RESEARCH_SCORE_MIN}/100 |",
              f"| City/category searches picked | {n_combos} |",
              f"| RapidAPI calls today | {usage.get('calls', 0)} |"]
     if stats:
