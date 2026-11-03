@@ -47,6 +47,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Compile Python files
         run: python -m compileall -q mailor.py agentmailor tests
+      - name: Smoke-test import and SMTP safety defaults
+        run: python -c "import mailor; assert mailor.DRY_RUN; assert not mailor.LIVE_OUTREACH_ENABLED; assert mailor.send_email('test@example.com', 'test', 'test') is None"
       - name: Run intelligence tests
         run: python -m unittest discover -s tests -v
 
