@@ -45,7 +45,7 @@ from typing import Optional
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
-from agentmailor.intelligence import review_email, safe_personalization
+from agentmailor.intelligence import classify_reply, review_email, safe_personalization
 
 import dns.resolver
 import requests
@@ -83,7 +83,8 @@ SMTP_USER = _env("SMTP_USER", EMAIL_USER)
 SMTP_PASS = _env("SMTP_PASS", EMAIL_PASS)
 FROM_EMAIL = _env("FROM_EMAIL", SMTP_USER)
 
-DRY_RUN = _env("DRY_RUN", "true").lower() == "true"  # safe by default; set DRY_RUN=false explicitly to send
+DRY_RUN = _env("DRY_RUN", "true").lower() == "true"  # safe default
+LIVE_OUTREACH_ENABLED = _env("LIVE_OUTREACH_ENABLED", "false").lower() == "true"  # explicit extra safety gate
 BUSINESS_HOURS_ONLY = _env("BUSINESS_HOURS_ONLY", "true").lower() == "true"
 DAILY_LIMIT = int(_env("DAILY_LIMIT", "10"))            # new emails per UTC day (all runs together)
 FOLLOWUP_LIMIT = int(_env("FOLLOWUP_LIMIT", "10"))      # follow-ups per UTC day
@@ -1638,6 +1639,8 @@ def write_summary(done, followups, cap, remaining, stats, n_combos, usage, reaso
 # MAIN
 # ─────────────────────────────────────────────
 def main() -> None:
+    if not DRY_RUN and not LIVE_OUTREACH_ENABLED:
+        raise SystemExit("Live sending is disabled. Set LIVE_OUTREACH_ENABLED=true only after reviewing compliance, sender identity, and test results.")
     if not DRY_RUN and not (EMAIL_USER and EMAIL_PASS):
         raise SystemExit("Missing EMAIL_USER / EMAIL_PASS (set them as environment variables / GitHub Secrets)")
 
