@@ -1566,28 +1566,28 @@ def process_lead(biz: dict, suppressed: set) -> bool:
     email = pick_api_email(biz.get("api_emails"), biz["city"], host)
     if not email and r is not None:
         email = find_public_email(host, r)
-    add_call_lead(biz, base["website"] or key, phone, email, angle, score, fact)      # even when we have no email
 
-    if not email:
-        log.info(f"⏭️  {key}: no usable email (call list entry saved)")
-        record({**base, "main_issue": angle, "score": score, "status": "no_email"})
-        return False
-    dom = email.split("@")[-1]
-    if email in suppressed or dom in suppressed:
-        return False
-    if biz.get("country") in STRICT_COUNTRIES and dom in FREE_MAIL:
-        log.info(f"⏭️  {key}: private address ({email}) in {biz.get('country')}, not allowed without consent")
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "no_email"})
-        return False
-    if email in _seen_emails:
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "dup_email"})
-        return False
+    email_problem = ""
+    if email:
+        dom = email.split("@")[-1]
+        if email in suppressed or dom in suppressed:
+            log.info("⏭️  %s: email/domain is suppressed; skipping", key)
+            return False
+        if biz.get("country") in STRICT_COUNTRIES and dom in FREE_MAIL:
+            email_problem = f"private address ({email}) in {biz.get('country')}; not used without consent"
+            email = None
+        elif email in _seen_emails:
+            record({**base, "email": email, "main_issue": angle, "score": score, "status": "dup_email"})
+            return False
 
-    ok, reason = verify_email(email)
-    if not ok:
-        log.info(f"⏭️  {key}: {email} failed verification ({reason})")
-        record({**base, "email": email, "main_issue": angle, "score": score, "status": "bad_email"})
-        return False
+    email_verified = False
+    if email:
+        ok, reason = verify_email(email)
+        if ok:
+            email_verified = True
+        else:
+            email_problem = f"{email} failed verification ({reason})"
+            email = None
 
     research = build_research_report(
         business_name=biz.get("name", ""), category=biz["category"], website_status=site,
@@ -1595,15 +1595,28 @@ def process_lead(biz: dict, suppressed: set) -> bool:
         category_fit=CATEGORIES[biz["category"]]["weight"])
     fit_score, fit_reasons = opportunity_score(
         category_weight=CATEGORIES[biz["category"]]["weight"], research=research,
-        phone_present=bool(phone), email_present=bool(email), email_verified=True,
-        suppressed=(email in suppressed or dom in suppressed) if email else False,
-        already_contacted=(email in _seen_emails) if email else False)
+        phone_present=bool(phone), email_present=bool(email), email_verified=email_verified,
+        suppressed=False, already_contacted=False)
     log.info("🧠 Research score=%s confidence=%s angle=%s reasons=%s",
              fit_score, research.evidence_confidence, research.recommended_angle, "; ".join(fit_reasons))
     if fit_score < RESEARCH_SCORE_MIN:
         log.info("⏭️  %s: research score %s < threshold %s", key, fit_score, RESEARCH_SCORE_MIN)
         record({**base, "email": email or "", "main_issue": research.recommended_angle,
                 "score": fit_score, "status": "low_research_fit"})
+        return False
+
+    # Only research-qualified prospects enter the manual call/WhatsApp list.
+    call_notes = "; ".join(research.observed_facts) or "No verified business-specific observation."
+    add_call_lead(biz, base["website"] or key, phone, email or "", research.recommended_angle, fit_score, call_notes)
+
+    if email_problem:
+        log.info("⏭️  %s: %s", key, email_problem)
+        status = "no_email" if "not used without consent" in email_problem else "bad_email"
+        record({**base, "email": "", "main_issue": research.recommended_angle, "score": fit_score, "status": status})
+        return False
+    if not email:
+        log.info(f"⏭️  {key}: no usable email (research-qualified phone lead saved)")
+        record({**base, "main_issue": research.recommended_angle, "score": fit_score, "status": "no_email"})
         return False
 
     mail = write_email(biz, angle, fact, research=research) or fallback_email(biz, angle, fact)
